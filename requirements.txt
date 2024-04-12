@@ -1,0 +1,7 @@
+Django==5.0.4
+djangorestframework
+aiohttp
+lxml
+BeautifulSoup4
+python-dotenv
+psycopg[binary]
