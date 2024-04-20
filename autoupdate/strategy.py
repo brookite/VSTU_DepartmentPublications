@@ -153,9 +153,12 @@ def short_task_batch():
         task.delete()
         if i % batch_size == 0:
             time.sleep(SLEEP_BATCH_TIME)
+    TIMESTAMPS.register_short_update()
 
 
 def global_autoupdate():
+    if delta_seconds(calculate_next_global_update(), datetime.datetime.now()) <= 0:
+        return
     ShortUpdateTasks.objects.all().delete()
     obsolescence_time = SETTINGS.obsolescence_time_seconds
     batch_size = SETTINGS.request_batch_size

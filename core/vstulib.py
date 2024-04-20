@@ -9,7 +9,9 @@ from core.request import *
 
 class VSTULibrary(UniversityLibrary):
     def _extract_index_information(self):
-        status, text = get("http://library.vstu.ru/publ_2/index.php", {"command": "search2"})
+        status, text = get(
+            "http://library.vstu.ru/publ_2/index.php", {"command": "search2"}
+        )
         universities = []
         faculties = []
         if status == 200:
@@ -40,13 +42,21 @@ class VSTULibrary(UniversityLibrary):
     def get_all_departments(self, faculty: Faculty) -> List[Department]:
         fac_id = faculty.id
         result = []
-        status, json_text = get_json("http://library.vstu.ru/publ_2/search_kaf.php", {"faculty_id": fac_id})
+        status, json_text = get_json(
+            "http://library.vstu.ru/publ_2/search_kaf.php", {"faculty_id": fac_id}
+        )
         if status == 200:
             for entry in json_text:
                 result.append(Department(entry["title"], entry["id"], faculty))
         return result
 
-    def search_by_author(self, author: Author, department: Department=None, publ_year_from: int = None, publ_year_to: int = None) -> Union[int, List[Publication]]:
+    def search_by_author(
+        self,
+        author: Author,
+        department: Department = None,
+        publ_year_from: int = None,
+        publ_year_to: int = None,
+    ) -> Union[int, List[Publication]]:
         data = {
             "universitet": "1",
             "fio": author.primary_name,
@@ -58,7 +68,7 @@ class VSTULibrary(UniversityLibrary):
             "year_reg2": "",
             "faculty": department.faculty.id if department else 0,
             "kafedra": department.id if department else 0,
-            "v_publ": "0"
+            "v_publ": "0",
         }
         status, text = post("http://library.vstu.ru/publ_2/publ_result.php", data, {})
         publications = []
@@ -74,12 +84,10 @@ class VSTULibrary(UniversityLibrary):
     def get_author_suggestions(self, query: str) -> List[str]:
         if query is None:
             query = ""
-        status, json_text = get_json("http://library.vstu.ru/publ_2/search_fio.php", {"term": query})
+        status, json_text = get_json(
+            "http://library.vstu.ru/publ_2/search_fio.php", {"term": query}
+        )
         if status == 200:
             return list(map(Author, json_text))
         else:
             return []
-
-
-lib = VSTULibrary()
-print(lib.search_by_author(Author("Шашков Д.А.")))

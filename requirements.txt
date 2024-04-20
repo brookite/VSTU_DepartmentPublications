@@ -5,3 +5,5 @@ lxml
 BeautifulSoup4
 python-dotenv
 psycopg[binary]
+schedule
+django-extensions
