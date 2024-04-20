@@ -15,7 +15,7 @@ class Department(models.Model):
 
 class Author(models.Model):
     full_name = models.CharField(max_length=128)
-    last_updated = models.DateTimeField(auto_now=True)
+    last_updated = models.DateTimeField(null=True)
     library_primary_name = models.CharField(max_length=96)
     department = models.ForeignKey(Department, null=True, on_delete=models.SET_NULL)
 
@@ -40,3 +40,17 @@ class Publication(models.Model):
 class EmailSubscriber(models.Model):
     email = models.CharField(max_length=96)
     tags = models.ManyToManyField(Tag)
+
+
+class Timestamps(models.Model):
+    param_name = models.CharField(max_length=64, primary_key=True, unique=True)
+    timestamp = models.DateTimeField()
+
+
+class ShortUpdateTasks(models.Model):
+    author = models.ForeignKey(Author, on_delete=models.CASCADE)
+
+
+class Settings(models.Model):
+    param_name = models.CharField(max_length=64, primary_key=True, unique=True)
+    param_value = models.CharField(max_length=1024, null=True)
