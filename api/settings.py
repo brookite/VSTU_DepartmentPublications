@@ -3,6 +3,7 @@ import datetime
 from api.models import Settings as SettingsModel, Author
 from api.models import Timestamps as TimestampsModel
 
+
 class Settings:
     def __init__(self):
         SettingsModel.objects.get_or_create(param_name="request_batch_size", param_value=3)
@@ -67,11 +68,16 @@ class Settings:
 
 class Timestamps:
     def __init__(self):
-        TimestampsModel.objects.get_or_create(param_name="last_global_update", param_value=None)
+        TimestampsModel.objects.get_or_create(param_name="last_short_update", param_value=datetime.datetime.now())
+        TimestampsModel.objects.get_or_create(param_name="last_global_update", param_value=datetime.datetime.now())
         TimestampsModel.objects.get_or_create(param_name="last_short_tasks_batch", param_value=None)
 
     @property
-    def last_update(self):
+    def last_short_update(self):
+        return TimestampsModel.objects.get(param_name="last_short_update").timestamp
+
+    @property
+    def last_author_update(self):
         return Author.objects.order_by("-last_updated").first().last_updated
 
     @property
