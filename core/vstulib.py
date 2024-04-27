@@ -1,10 +1,14 @@
-from typing import List, Union
+import re
+from typing import List, Tuple
 
 from bs4 import NavigableString
 
 from core.common import UniversityLibrary
 from core.dto import Publication, Department, Faculty, Author
 from core.request import *
+
+
+ORDER_NUMBER_REGEX = re.compile(r"^(\d+).\s{0,}")
 
 
 class VSTULibrary(UniversityLibrary):
@@ -47,7 +51,8 @@ class VSTULibrary(UniversityLibrary):
         )
         if status == 200:
             for entry in json_text:
-                result.append(Department(entry["title"], entry["id"], faculty))
+                if int(entry["id"]) != 0:
+                    result.append(Department(entry["title"], entry["id"], faculty))
         return result
 
     def search_by_author(
@@ -56,7 +61,7 @@ class VSTULibrary(UniversityLibrary):
         department: Department = None,
         publ_year_from: int = None,
         publ_year_to: int = None,
-    ) -> Union[int, List[Publication]]:
+    ) -> Tuple[int, List[Publication]]:
         data = {
             "universitet": "1",
             "fio": author.primary_name,
@@ -78,7 +83,9 @@ class VSTULibrary(UniversityLibrary):
             for publication in resultlist:
                 if isinstance(publication, NavigableString):
                     continue
-                publications.append(Publication(innerHTML(publication)))
+                text = innerHTML(publication)
+                text = re.sub(ORDER_NUMBER_REGEX, "", text)
+                publications.append(Publication(text))
         return status, publications
 
     def get_author_suggestions(self, query: str) -> List[str]:
