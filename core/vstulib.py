@@ -9,6 +9,7 @@ from core.request import *
 
 
 ORDER_NUMBER_REGEX = re.compile(r"^(\d+).\s{0,}")
+EMPTY_VALUES = re.compile(r"^\s{0,}\(\s{0,}-?\s{0,}\)(\s{0,}-?)+$")
 
 
 class VSTULibrary(UniversityLibrary):
@@ -34,7 +35,7 @@ class VSTULibrary(UniversityLibrary):
                 if isinstance(fac_record, NavigableString):
                     continue
                 id = int(fac_record["value"])
-                if id == 0 or id == 11:
+                if id == 0 or id == 11 or EMPTY_VALUES.match(fac_record.text):
                     continue
                 name = fac_record.text
                 faculties.append(Faculty(name, id))
@@ -51,7 +52,7 @@ class VSTULibrary(UniversityLibrary):
         )
         if status == 200:
             for entry in json_text:
-                if int(entry["id"]) != 0:
+                if int(entry["id"]) != 0 and not EMPTY_VALUES.match(entry["title"]):
                     result.append(Department(entry["title"], entry["id"], faculty))
         return result
 

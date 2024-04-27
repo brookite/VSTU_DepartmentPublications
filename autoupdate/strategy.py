@@ -2,6 +2,7 @@ import datetime
 import logging
 import time
 from croniter import croniter
+from django.utils import timezone
 
 from api.models import *
 from api.settings import (
@@ -17,6 +18,7 @@ SETTINGS = SettingsHighLevel()
 TIMESTAMPS = TimestampsHighLevel()
 
 SLEEP_BATCH_TIME = 120
+INFO_UPDATE_SLEEP_TIME = 10
 
 logger = logging.getLogger("autoupdate")
 
@@ -67,23 +69,50 @@ def schedule_short_task(author: Author):
 
 
 # Секция кода, которая требует вызова только в сервере автообновления! Нельзя вызывать эти функции в коде бэкенда
+
+
+def _update_university_info():
+    logger.info("Обновляю информацию об университете")
+    faculties = LIBRARY.get_all_faculties()
+    for faculty in faculties:
+        if not Faculty.objects.filter(
+            name=faculty.name, library_id=faculty.id
+        ).exists():
+            logger.info(f"Добавляю новый факультет {faculty.name} [{faculty.id}]")
+            Faculty.objects.create(name=faculty.name, library_id=faculty.id)
+    for faculty in Faculty.objects.all():
+        deps = LIBRARY.get_all_departments(
+            dto.Faculty(faculty.name, faculty.library_id)
+        )
+        for dep in deps:
+            logger.info(
+                f"Добавляю новую кафедру {dep.name} [{dep.id}] в {faculty.name} [{faculty.library_id}]"
+            )
+            if not Department.objects.filter(library_id=dep.id).exists():
+                Department.objects.create(
+                    name=dep.name, library_id=dep.id, faculty=faculty
+                )
+        time.sleep(INFO_UPDATE_SLEEP_TIME)
+    logger.info("Информация об университете обновлена")
+
+
 def _autoupdate_author(author: Author):
     library_publications = set(
         map(
             lambda x: x.info,
-            LIBRARY.search_by_author(dto.Author(author.library_primary_name)),
+            LIBRARY.search_by_author(dto.Author(author.library_primary_name))[1],
         )
     )
     local_publications = set(
-        map(lambda x: x.html_content, Publication.objects.filter(author=author))
+        map(lambda x: x.html_content, Publication.objects.filter(authors__in=[author]))
     )
     new_publications = library_publications - local_publications
     removed_publications = local_publications - library_publications
     logger.debug(
-        f"Найдено {new_publications} новых публикаций, удалению подлежит {removed_publications} публикаций"
+        f"Найдено {len(new_publications)} новых публикаций, удалению подлежит {len(removed_publications)} публикаций"
     )
     for new in new_publications:
-        pub = Publication.objects.create(html_content=new)
+        pub, created = Publication.objects.get_or_create(html_content=new)
         pub.authors.add(author)
         pub.save()
     for old in removed_publications:
@@ -97,18 +126,27 @@ def _autoupdate_author_by_department(author: Author, dep: Department):
             lambda x: x.info,
             LIBRARY.search_by_author(
                 dto.Author(author.library_primary_name),
-                dto.Department(dep.name, dep.library_id),
-            ),
+                dto.Department(
+                    dep.name,
+                    dep.library_id,
+                    dto.Faculty(dep.faculty.name, dep.faculty.library_id),
+                ),
+            )[1],
         )
     )
-    local_publications = Publication.objects.filter(author=author)
+    local_publications = Publication.objects.filter(authors__in=[author])
+    stats_paired_count = 0
     for pub in local_publications:
         if pub.html_content in library_publications:
             pub.department = dep
+            stats_paired_count += 1
             pub.save()
             library_publications.remove(pub.html_content)
+    logger.debug(
+        f"Привязано публикаций {stats_paired_count}, на очереди добавление еще {len(library_publications)}"
+    )
     for new in library_publications:
-        pub = Publication.objects.create(html_content=new)
+        pub, created = Publication.objects.get_or_create(html_content=new)
         pub.authors.add(author)
         pub.save()
 
@@ -120,6 +158,11 @@ def autoupdate_author(author: Author):
         f"Обновление автора {author.library_primary_name} [{author.pk}] по кафедре {author.department.name}"
     )
     _autoupdate_author_by_department(author, author.department)
+    logger.debug(f"Обновление даты обновления {author.library_primary_name}")
+    # TODO: aliases update
+    author.last_updated = datetime.datetime.now().replace(
+        tzinfo=timezone.get_current_timezone()
+    )
 
 
 def short_task_batch():
@@ -155,28 +198,30 @@ def short_task_batch():
     logger.info(f"Обработка {len(tasks)} одиночных задач завершена")
 
 
-def global_autoupdate():
+def global_autoupdate(skip_university_update=False):
     logger.info("Начато глобальное автообновление. Чистка очереди одиночных задач...")
     ShortUpdateTasks.objects.all().delete()
+    if not skip_university_update:
+        _update_university_info()
     obsolescence_time = SETTINGS.obsolescence_time_seconds
     batch_size = SETTINGS.request_batch_size
+    i = -1
     for i, author in enumerate(Author.objects.all()):
         if (
-            not author.last_updated
-            or delta_seconds(datetime.datetime.now(), author.last_updated)
+            author.last_updated
+            and delta_seconds(datetime.datetime.now(), author.last_updated)
             < obsolescence_time
         ):
             return
         try:
             autoupdate_author(author)
-            author.last_updated = datetime.datetime.now()
             author.save()
         except Exception as e:
             logger.error(
                 f"Неизвестная ошибка при обновлении автора {author.library_primary_name}, {author.pk}",
                 exc_info=True,
             )
-        if i % batch_size == 0:
+        if (i + 1) % batch_size == 0:
             time.sleep(SLEEP_BATCH_TIME)
     TIMESTAMPS.register_global_update()
     logger.info(f"Глобальное автообновление завершено. Обработано {i + 1} авторов")

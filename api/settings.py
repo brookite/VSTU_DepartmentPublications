@@ -2,6 +2,7 @@ import datetime
 
 from api.models import Settings as SettingsModel, Author
 from api.models import Timestamps as TimestampsModel
+from django.utils import timezone
 
 
 class Settings:
@@ -149,11 +150,15 @@ class Timestamps:
         return TimestampsModel.objects.get(param_name="last_global_update").timestamp
 
     def register_global_update(self):
-        update_field = TimestampsModel.objects.get("last_global_update")
-        update_field.timestamp = datetime.datetime.now()
+        update_field = TimestampsModel.objects.get(param_name="last_global_update")
+        update_field.timestamp = datetime.datetime.now().replace(
+            tzinfo=timezone.get_current_timezone()
+        )
         update_field.save()
 
     def register_short_update(self):
-        update_field = TimestampsModel.objects.get("last_short_tasks_batch")
-        update_field.timestamp = datetime.datetime.now()
+        update_field = TimestampsModel.objects.get(param_name="last_short_tasks_batch")
+        update_field.timestamp = datetime.datetime.now().replace(
+            tzinfo=timezone.get_current_timezone()
+        )
         update_field.save()
