@@ -1,4 +1,5 @@
 import datetime
+import logging
 import time
 from croniter import croniter
 
@@ -16,6 +17,8 @@ SETTINGS = SettingsHighLevel()
 TIMESTAMPS = TimestampsHighLevel()
 
 SLEEP_BATCH_TIME = 120
+
+logger = logging.getLogger("autoupdate")
 
 
 def calculate_next_update():
@@ -54,8 +57,12 @@ def schedule_short_task(author: Author):
         delta_seconds(calculate_next_global_update(), datetime.datetime.now())
         <= SETTINGS.obsolescence_time_seconds
     ):
+        logger.debug(
+            f"Одиночная задача не была создана, в скором времени произойдет глобальное обновление {calculate_next_global_update()}"
+        )
         return False
     ShortUpdateTasks.objects.get_or_create(author=author)
+    logger.info("Добавлена новая одиночная задача")
     return True
 
 
@@ -72,11 +79,15 @@ def _autoupdate_author(author: Author):
     )
     new_publications = library_publications - local_publications
     removed_publications = local_publications - library_publications
+    logger.debug(
+        f"Найдено {new_publications} новых публикаций, удалению подлежит {removed_publications} публикаций"
+    )
     for new in new_publications:
         pub = Publication.objects.create(html_content=new)
         pub.authors.add(author)
         pub.save()
     for old in removed_publications:
+        logger.debug(f"Удаление публикации: {old}")
         Publication.objects.filter(text=old).delete()
 
 
@@ -103,7 +114,11 @@ def _autoupdate_author_by_department(author: Author, dep: Department):
 
 
 def autoupdate_author(author: Author):
+    logger.debug(f"Обновление автора {author.library_primary_name} [{author.pk}]")
     _autoupdate_author(author)
+    logger.debug(
+        f"Обновление автора {author.library_primary_name} [{author.pk}] по кафедре {author.department.name}"
+    )
     _autoupdate_author_by_department(author, author.department)
 
 
@@ -116,13 +131,20 @@ def short_task_batch():
         delta_seconds(global_update_time, datetime.datetime.now())
         < SETTINGS.obsolescence_time_seconds
     ):
+        logger.debug(
+            f"{global_update_time} будет глобальное автообновление, не выполняю одиночные задачи"
+        )
         return
     if datetime.datetime.now() <= last_update + datetime.timedelta(
         seconds=SETTINGS.short_task_batch_update_delay
     ):
+        logger.debug(
+            "Недавно было выполнение одиночных задач. Ожидание истечения таймаута"
+        )
         return
     tasks = ShortUpdateTasks.objects.all()
     tasks = tasks[: min(SETTINGS.max_short_tasks, len(tasks))]
+    logger.info(f"Обработка {len(tasks)} одиночных задач начата")
     batch_size = SETTINGS.request_batch_size
     for i, task in enumerate(tasks):
         autoupdate_author(task.author)
@@ -130,9 +152,11 @@ def short_task_batch():
         if i % batch_size == 0:
             time.sleep(SLEEP_BATCH_TIME)
     TIMESTAMPS.register_short_update()
+    logger.info(f"Обработка {len(tasks)} одиночных задач завершена")
 
 
 def global_autoupdate():
+    logger.info("Начато глобальное автообновление. Чистка очереди одиночных задач...")
     ShortUpdateTasks.objects.all().delete()
     obsolescence_time = SETTINGS.obsolescence_time_seconds
     batch_size = SETTINGS.request_batch_size
@@ -143,9 +167,16 @@ def global_autoupdate():
             < obsolescence_time
         ):
             return
-        autoupdate_author(author)
-        author.last_updated = datetime.datetime.now()
-        author.save()
+        try:
+            autoupdate_author(author)
+            author.last_updated = datetime.datetime.now()
+            author.save()
+        except Exception as e:
+            logger.error(
+                f"Неизвестная ошибка при обновлении автора {author.library_primary_name}, {author.pk}",
+                exc_info=True,
+            )
         if i % batch_size == 0:
             time.sleep(SLEEP_BATCH_TIME)
     TIMESTAMPS.register_global_update()
+    logger.info(f"Глобальное автообновление завершено. Обработано {i + 1} авторов")
