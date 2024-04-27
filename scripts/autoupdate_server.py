@@ -1,11 +1,12 @@
-import schedule
+from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
+
 from autoupdate.strategy import *
 
-schedule.every(SETTINGS.short_tasks_wait_interval_seconds).seconds.do(short_task_batch)
-schedule.every(15).minutes.do(global_autoupdate)
-
-if __name__ == "__main__":
-    print("Autoupdate server starting...")
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+scheduler = BlockingScheduler()
+scheduler.add_job(global_autoupdate, CronTrigger.from_crontab(SETTINGS.cron_schedule))
+scheduler.add_job(
+    short_task_batch, IntervalTrigger(seconds=SETTINGS.short_tasks_check_interval)
+)
+scheduler.start()

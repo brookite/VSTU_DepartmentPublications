@@ -6,32 +6,20 @@ from api.models import Timestamps as TimestampsModel
 
 class Settings:
     def __init__(self):
-        # TODO: fix
-        SettingsModel.objects.get_or_create(
-            param_name="request_batch_size", param_value=3
-        )
-        SettingsModel.objects.get_or_create(
-            param_name="short_task_batch_interval_seconds", param_value=5 * 3600
-        )
-        SettingsModel.objects.get_or_create(
-            param_name="obsolescence_time_seconds", param_value=3
-        )
-        SettingsModel.objects.get_or_create(param_name="max_short_tasks", param_value=8)
-        SettingsModel.objects.get_or_create(
-            param_name="short_tasks_wait_interval_seconds", param_value=300
-        )
-        SettingsModel.objects.get_or_create(
-            param_name="day_of_autoupdate", param_value="saturday"
-        )
-        SettingsModel.objects.get_or_create(
-            param_name="time_autoupdate_seconds", param_value=3600 * 3
-        )
-        SettingsModel.objects.get_or_create(
-            param_name="autoupdate_interval", param_value="week"
-        )
-        SettingsModel.objects.get_or_create(
-            param_name="autoupdate_interval_length", param_value=1
-        )
+        defaults = [
+            {"param_name": "request_batch_size", "param_value": 3},
+            {"param_name": "short_task_batch_update_delay", "param_value": 5 * 3600},
+            {"param_name": "obsolescence_time_seconds", "param_value": 3},
+            {"param_name": "max_short_tasks", "param_value": 8},
+            {"param_name": "short_tasks_check_interval", "param_value": 300},
+            {"param_name": "cron_schedule", "param_value": "2 0 * * 5"},
+        ]
+
+        for default in defaults:
+            SettingsModel.objects.get_or_create(
+                param_name=default["param_name"],
+                defaults={"param_value": default["param_value"]},
+            )
 
     @property
     def request_batch_size(self):
@@ -48,10 +36,10 @@ class Settings:
         )
 
     @property
-    def short_task_batch_interval_seconds(self):
+    def short_task_batch_update_delay(self):
         return int(
             SettingsModel.objects.get(
-                param_name="short_task_batch_interval_seconds"
+                param_name="short_task_batch_update_delay"
             ).param_value
         )
 
@@ -60,34 +48,20 @@ class Settings:
         return int(SettingsModel.objects.get(param_name="max_short_tasks").param_value)
 
     @property
-    def short_tasks_wait_interval_seconds(self):
+    def cron_schedule(self):
+        return SettingsModel.objects.get(param_name="cron_schedule").param_value
+
+    @property
+    def short_tasks_check_interval(self):
         return int(
             SettingsModel.objects.get(
-                param_name="short_tasks_wait_interval_seconds"
+                param_name="short_tasks_check_interval"
             ).param_value
         )
 
-    @property
-    def day_of_autoupdate(self):
-        return str(
-            SettingsModel.objects.get(param_name="day_of_autoupdate").param_value
-        )
-
-    @property
-    def autoupdate_interval(self):
-        return str(
-            SettingsModel.objects.get(param_name="autoupdate_interval").param_value
-        )
-
-    @property
-    def autoupdate_interval_length(self):
-        return int(
-            SettingsModel.objects.get(
-                param_name="autoupdate_interval_length"
-            ).param_value
-        )
-
-    def plan_autoupdate(self, interval: str, count: int, day_of_week: str = None):
+    def plan_autoupdate(
+        self, interval: str, count: int, day_of_week: str = None, at_time: int = 0
+    ):
         if interval not in ["day", "week", "month"]:
             raise ValueError("Invalid interval: " + interval)
         if day_of_week not in [
@@ -101,31 +75,64 @@ class Settings:
             "sunday",
         ]:
             raise ValueError("Invalid day of week: " + day_of_week)
-        autoupdate_interval = SettingsModel.objects.get(
-            param_name="autoupdate_interval"
-        )
-        autoupdate_interval.param_value = interval
-        autoupdate_interval.save()
 
-        interval_length = SettingsModel.objects.get(
-            param_name="autoupdate_interval_length"
-        )
-        interval_length.param_value = count
-        interval_length.save()
-
-        day_of_autoupdate = SettingsModel.objects.get(param_name="day_of_autoupdate")
-        day_of_autoupdate.param_value = day_of_week
-        day_of_autoupdate.save()
+        if day_of_week is not None:
+            num_day_of_week = [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ].index(day_of_week) + 1
+        else:
+            num_day_of_week = None
+        every_day_month = None
+        every_day_week = None
+        every_month = None
+        if interval == "day" and count > 7:
+            every_day_month = count
+        elif interval == "day" and count <= 7:
+            every_day_week = count
+        elif interval == "week":
+            every_day_month = count
+        elif interval == "month":
+            every_day_month = count
+        hour, minute = at_time // 3600, at_time % 3600
+        if every_day_month:
+            if num_day_of_week:
+                cron = f"{hour} {minute} */{every_day_month} * {num_day_of_week}"
+            else:
+                cron = f"{hour} {minute} */{every_day_month} * *"
+        elif every_day_week:
+            cron = f"{hour} {minute} * * */{every_day_week}"
+        elif every_month:
+            if num_day_of_week:
+                cron = f"{hour} {minute} * */{every_month} {num_day_of_week}"
+            else:
+                cron = f"{hour} {minute} * */{every_month} *"
+        setting = SettingsModel.objects.get(param_name="cron_schedule")
+        setting.param_value = cron
+        setting.save()
+        return cron
 
 
 class Timestamps:
     def __init__(self):
-        TimestampsModel.objects.get_or_create(
-            param_name="last_global_update", timestamp=datetime.datetime.now()
-        )
-        TimestampsModel.objects.get_or_create(
-            param_name="last_short_tasks_batch", timestamp=0
-        )
+        defaults = [
+            {"param_name": "last_global_update", "timestamp": datetime.datetime.now()},
+            {
+                "param_name": "last_short_tasks_batch",
+                "timestamp": datetime.datetime.fromtimestamp(0),
+            },
+        ]
+
+        for default in defaults:
+            TimestampsModel.objects.get_or_create(
+                param_name=default["param_name"],
+                defaults={"timestamp": default["timestamp"]},
+            )
 
     @property
     def last_update(self):

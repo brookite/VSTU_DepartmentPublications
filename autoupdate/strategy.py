@@ -1,5 +1,6 @@
 import datetime
 import time
+from croniter import croniter
 
 from api.models import *
 from api.settings import (
@@ -22,14 +23,14 @@ def calculate_next_update():
     global_update_time = calculate_next_global_update()
     if ShortUpdateTasks.objects.count() > 0:
         if datetime.datetime.now() <= last_update + datetime.timedelta(
-            seconds=SETTINGS.short_task_batch_interval_seconds
+            seconds=SETTINGS.short_task_batch_update_delay
         ):
             next_update_time = last_update + datetime.timedelta(
-                seconds=SETTINGS.short_task_batch_interval_seconds
+                seconds=SETTINGS.short_task_batch_update_delay
             )
         else:
             next_update_time = datetime.datetime.now() + datetime.timedelta(
-                seconds=SETTINGS.short_tasks_wait_interval_seconds
+                seconds=SETTINGS.short_tasks_check_interval
             )
         if (
             abs(delta_seconds(global_update_time, next_update_time))
@@ -43,44 +44,19 @@ def calculate_next_update():
 
 
 def calculate_next_global_update():
-    last_global_update = TIMESTAMPS.last_global_update
-    if last_global_update is None:
-        last_global_update = datetime.datetime.now()
-    last_global_update -= datetime.timedelta(days=last_global_update.weekday())
-    last_global_update = last_global_update.replace(hour=0, minute=0)
-    delta = 0
-    interval = SETTINGS.autoupdate_interval
-    if interval == "week":
-        delta += 3600 * 24 * 7 * SETTINGS.autoupdate_interval_length
-        day_of_week = SETTINGS.day_of_autoupdate
-        days = [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        ]
-        num = days.index(day_of_week)
-        delta += 3600 * 24 * num
-    elif interval == "day":
-        delta += 3600 * 24 * 7 * SETTINGS.autoupdate_interval_length
-    elif interval == "month":
-        delta += 3600 * 24 * 30 * 3 * SETTINGS.autoupdate_interval_length
-    return last_global_update + datetime.timedelta(days=delta)
+    return croniter(SETTINGS.cron_schedule, datetime.datetime.now()).get_next(
+        datetime.datetime
+    )
 
 
 def schedule_short_task(author: Author):
-    ShortUpdateTasks.objects.get_or_create(author=author)
     if (
         delta_seconds(calculate_next_global_update(), datetime.datetime.now())
         <= SETTINGS.obsolescence_time_seconds
     ):
         return False
-    if not ShortUpdateTasks.objects.filter(author=author).exists():
-        ShortUpdateTasks.objects.create(author=author)
-        return True
+    ShortUpdateTasks.objects.get_or_create(author=author)
+    return True
 
 
 # Секция кода, которая требует вызова только в сервере автообновления! Нельзя вызывать эти функции в коде бэкенда
@@ -142,7 +118,7 @@ def short_task_batch():
     ):
         return
     if datetime.datetime.now() <= last_update + datetime.timedelta(
-        seconds=SETTINGS.short_task_batch_interval_seconds
+        seconds=SETTINGS.short_task_batch_update_delay
     ):
         return
     tasks = ShortUpdateTasks.objects.all()
@@ -157,8 +133,6 @@ def short_task_batch():
 
 
 def global_autoupdate():
-    if delta_seconds(calculate_next_global_update(), datetime.datetime.now()) <= 0:
-        return
     ShortUpdateTasks.objects.all().delete()
     obsolescence_time = SETTINGS.obsolescence_time_seconds
     batch_size = SETTINGS.request_batch_size
