@@ -96,6 +96,6 @@ class VSTULibrary(UniversityLibrary):
             "http://library.vstu.ru/publ_2/search_fio.php", {"term": query}
         )
         if status == 200:
-            return list(map(Author, json_text))
+            return list(json_text)
         else:
             return []
