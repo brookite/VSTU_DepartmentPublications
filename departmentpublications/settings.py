@@ -181,6 +181,11 @@ LOGGING = {
             "level": "INFO",
             "propagate": True,
         },
+        "core": {
+            "handlers": ["file", "console"],
+            "level": "INFO",
+            "propagate": True,
+        },
         "autoupdate": {
             "handlers": ["autoupdate_file", "console"],
             "level": "DEBUG",

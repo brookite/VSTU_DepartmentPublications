@@ -1,4 +1,5 @@
 import re
+import logging
 from typing import List, Tuple
 
 from bs4 import NavigableString
@@ -7,6 +8,7 @@ from core.common import UniversityLibrary
 from core.dto import Publication, Department, Faculty, Author
 from core.request import *
 
+logger = logging.getLogger("core")
 
 ORDER_NUMBER_REGEX = re.compile(r"^(\d+).\s{0,}")
 EMPTY_VALUES = re.compile(r"^\s{0,}\(\s{0,}-?\s{0,}\)(\s{0,}-?)+$")
@@ -14,6 +16,7 @@ EMPTY_VALUES = re.compile(r"^\s{0,}\(\s{0,}-?\s{0,}\)(\s{0,}-?)+$")
 
 class VSTULibrary(UniversityLibrary):
     def _extract_index_information(self):
+        logger.debug("Extracting information from main library search page")
         status, text = get(
             "http://library.vstu.ru/publ_2/index.php", {"command": "search2"}
         )
@@ -39,6 +42,10 @@ class VSTULibrary(UniversityLibrary):
                     continue
                 name = fac_record.text
                 faculties.append(Faculty(name, id))
+        else:
+            logger.error(
+                f"Запрос в библиотеку (получение общей информации) не удался, код {status}, содержимое: {text}"
+            )
         return universities, faculties
 
     def get_all_faculties(self) -> List[Faculty]:
@@ -54,6 +61,10 @@ class VSTULibrary(UniversityLibrary):
             for entry in json_text:
                 if int(entry["id"]) != 0 and not EMPTY_VALUES.match(entry["title"]):
                     result.append(Department(entry["title"], entry["id"], faculty))
+        else:
+            logger.error(
+                f"Запрос в библиотеку (получение кафедр {faculty.name}) не удался, код {status}, содержимое: {text}"
+            )
         return result
 
     def search_by_author(
@@ -76,6 +87,7 @@ class VSTULibrary(UniversityLibrary):
             "kafedra": department.id if department else 0,
             "v_publ": "0",
         }
+        logger.debug(f"Поиск по запросу в библиотеке: {author.primary_name}")
         status, text = post("http://library.vstu.ru/publ_2/publ_result.php", data, {})
         publications = []
         if status == 200:
@@ -87,6 +99,10 @@ class VSTULibrary(UniversityLibrary):
                 text = innerHTML(publication)
                 text = re.sub(ORDER_NUMBER_REGEX, "", text)
                 publications.append(Publication(text))
+        else:
+            logger.error(
+                f"Запрос в библиотеку (поиск публикаций {author.primary_name}) не удался, код {status}, содержимое: {text}"
+            )
         return status, publications
 
     def get_author_suggestions(self, query: str) -> List[str]:
@@ -98,4 +114,7 @@ class VSTULibrary(UniversityLibrary):
         if status == 200:
             return list(json_text)
         else:
+            logger.warning(
+                f"Запрос подсказок к имени не удался, код {status}, запрос: {query}"
+            )
             return []
