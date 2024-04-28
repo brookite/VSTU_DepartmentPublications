@@ -220,7 +220,10 @@ def global_autoupdate(skip_university_update=False):
     for i, author in enumerate(Author.objects.all()):
         if (
             author.last_updated
-            and delta_seconds(datetime.datetime.now(), author.last_updated)
+            and delta_seconds(
+                datetime.datetime.now().replace(tzinfo=timezone.get_current_timezone()),
+                author.last_updated,
+            )
             < obsolescence_time
         ):
             return
