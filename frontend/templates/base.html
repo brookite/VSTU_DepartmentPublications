@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="static/bootstrap/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="static/remixicon/remixicon.css"
+      rel="stylesheet"
+    />
+    <link href="static/app/css/main.css" rel="stylesheet" />
+    <title>Публикации кафедры</title>
+  </head>
+  <body class="d-flex flex-column min-vh-100">
+    <header class="navbar navbar-expand-lg" style="background-color: #0b57a3">
+      <div class="container-fluid">
+        <a class="navbar-brand text-white" href="#">Публикации кафедры</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#mainNav"
+          aria-controls="mainNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-end" id="mainNav">
+          <a class="link-light me-2" href="/updates">Обновления</a>
+          <button
+            class="btn btn-outline-light me-2 mb-1"
+            type="submit"
+            data-bs-toggle="modal"
+            data-bs-target="#subscribeModal"
+            style="display: none"
+          >
+            Подписаться на публикации
+          </button>
+          <form class="d-flex">
+            <select
+              class="form-select me-2 mb-1"
+              aria-label="Выбор университета"
+            >
+              <option selected>Выберите университет</option>
+              <!-- Здесь можно добавить опции для университетов -->
+            </select>
+            <select class="form-select me-1 mb-1" aria-label="Выбор кафедры">
+              <option selected>Выберите кафедру</option>
+              <!-- Здесь можно добавить опции для кафедр -->
+            </select>
+          </form>
+          <span class="text text-light me-2 mb-1">
+            Вы вошли как администратор
+          </span>
+          <a
+            class="icon-button me-2"
+            data-bs-toggle="modal"
+            data-bs-target="#autoUpdateModal"
+            ><i class="ri-settings-3-fill"></i
+          ></a>
+        </div>
+      </div>
+    </header>
+
+    {% block body_contents %}
+    {% endblock %}
+
+    <footer class="footer mt-auto py-3 bg-light">
+      <div class="container">
+        <span class="text-muted text-end">© 2024 Кафедра ПОАС, ВолгГТУ</span>
+        <span class="text-muted"> | </span>
+        <a href="mailto:dmitriy.shashkov1@yandex.ru" class="text-muted"
+          >Сообщить о проблеме</a
+        >
+      </div>
+    </footer>
+
+
+    {% block after_footer_contents %}
+    {% endblock %}
+
+    <script
+      src="static/bootstrap/js/bootstrap.bundle.min.js"
+    ></script>
+    <script
+      src="static/app/js/main.js"
+    ></script>
+
+  </body>
+</html>

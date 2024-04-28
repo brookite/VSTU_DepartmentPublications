@@ -1,0 +1,21 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+  
+.flex-grow-1 {
+    flex-grow: 1;
+}
+
+footer {
+    margin-top: 15px;
+}
+
+.icon-button {
+    font-size: 20px;
+    color: white;
+    text-decoration: none;
+    cursor: pointer;
+}
