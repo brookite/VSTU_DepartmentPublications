@@ -166,7 +166,9 @@ def autoupdate_author(author: Author):
     _autoupdate_author_by_department(author, author.department)
     logger.debug(f"Обновление даты обновления {author.library_primary_name}")
     for alias in AuthorAlias.objects.filter(author=author):
-        logger.debug(f"Обновление автора {author.library_primary_name} по обозначению: {alias.alias}")
+        logger.debug(
+            f"Обновление автора {author.library_primary_name} по обозначению: {alias.alias}"
+        )
         _autoupdate_author(author, alias.alias)
         _autoupdate_author_by_department(author, alias.alias)
     author.last_updated = datetime.datetime.now().replace(
