@@ -1,6 +1,8 @@
 import datetime
 import logging
 import time
+from typing import Optional
+
 from croniter import croniter
 from django.utils import timezone
 
@@ -96,11 +98,12 @@ def _update_university_info():
     logger.info("Информация об университете обновлена")
 
 
-def _autoupdate_author(author: Author):
+def _autoupdate_author(author: Author, use_alias: Optional[str] = None):
+    name = author.library_primary_name if not use_alias else use_alias
     library_publications = set(
         map(
             lambda x: x.info,
-            LIBRARY.search_by_author(dto.Author(author.library_primary_name))[1],
+            LIBRARY.search_by_author(dto.Author(name))[1],
         )
     )
     local_publications = set(
@@ -120,12 +123,15 @@ def _autoupdate_author(author: Author):
         Publication.objects.filter(text=old).delete()
 
 
-def _autoupdate_author_by_department(author: Author, dep: Department):
+def _autoupdate_author_by_department(
+    author: Author, dep: Department, use_alias: Optional[str] = None
+):
+    name = author.library_primary_name if not use_alias else use_alias
     library_publications = set(
         map(
             lambda x: x.info,
             LIBRARY.search_by_author(
-                dto.Author(author.library_primary_name),
+                dto.Author(name),
                 dto.Department(
                     dep.name,
                     dep.library_id,
@@ -159,7 +165,10 @@ def autoupdate_author(author: Author):
     )
     _autoupdate_author_by_department(author, author.department)
     logger.debug(f"Обновление даты обновления {author.library_primary_name}")
-    # TODO: aliases update
+    for alias in AuthorAlias.objects.filter(author=author):
+        logger.debug(f"Обновление автора {author.library_primary_name} по обозначению: {alias.alias}")
+        _autoupdate_author(author, alias.alias)
+        _autoupdate_author_by_department(author, alias.alias)
     author.last_updated = datetime.datetime.now().replace(
         tzinfo=timezone.get_current_timezone()
     )
