@@ -5,7 +5,7 @@
               role="tabpanel"
               aria-labelledby="publications-tab"
             >
-              <h3>{{ author.full_name }}</h3>
+              <h3 data-current-author-id="{{ author.pk }}">{{ author.full_name }}</h3>
               <div id="tagsContainer" class="mt-2 mb-2">
                   {% for tag in tags %}
                       <span class="badge text-bg-primary" data-tag-id="{{ tag.pk }}">{{ tag.name }}</span>
@@ -70,25 +70,26 @@
                   </div>
                   <div class="mb-3">
                     <label for="department" class="form-label">Кафедра</label>
-                    <input
-                      list="departments"
-                      id="department"
-                      name="department"
-                      class="form-control"
-                      placeholder="Введите название кафедры"
-                      value="{{ author.department.name }}"
-                    />
+                    <select id="department" name="department" class="form-control">
+                        {% for dep in departments %}
+                            {% if dep.name == author.department.name %}
+                            <option selected value="{{ dep.id }}">{{ dep.name }}</option>
+                            {% else %}
+                            <option value="{{ dep.id }}">{{ dep.name }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
                   </div>
                   <div class="mb-3">
                     <label for="tags" class="form-label">Теги</label>
                     <input
                       list="tagsList"
-                      id="tags"
                       name="tags"
-                      class="form-control"
+                      class="form-control tagsAddField"
+                      data-for="editTagsContainer"
                       placeholder="Добавьте теги, разделяя их запятыми"
                     />
-                    <div id="tagsContainer" class="mt-2">
+                    <div class="tagsContainer mt-2" id="editTagsContainer">
                         {% for tag in tags %}
                       <span data-tag-id="{{ tag.pk }}" class="badge text-bg-primary"
                         >{{ tag.name }} <i class="removeTag ri-close-line"></i
@@ -143,10 +144,10 @@
                     >
                   </div>
                 {% if user.is_authenticated %}
-                  <button type="submit" class="saveRecordBtn btn btn-primary">
+                  <button type="submit" id="saveRecordBtn" class="btn btn-primary">
                     Сохранить изменения
                   </button>
-                  <button type="button" class="removeRecordBtn btn btn-danger">
+                  <button type="button" id="removeRecordBtn" class="btn btn-danger">
                     Удалить запись
                   </button>
                 {% endif %}

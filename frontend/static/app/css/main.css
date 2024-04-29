@@ -19,3 +19,7 @@ footer {
     text-decoration: none;
     cursor: pointer;
 }
+
+.removeTag {
+    cursor: pointer;
+}

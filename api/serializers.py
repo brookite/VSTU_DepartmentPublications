@@ -18,6 +18,9 @@ class AuthorSerializer(serializers.ModelSerializer):
     tags = serializers.SerializerMethodField()
     last_updated = serializers.SerializerMethodField()
 
+    aliases_list = serializers.ListField(child=serializers.CharField(), required=False)
+    tags_list = serializers.ListField(child=serializers.CharField(), required=False)
+
     def get_aliases(self, obj):
         author_aliases = AuthorAlias.objects.filter(author=obj)
         return [author_alias.alias for author_alias in author_aliases]
@@ -30,18 +33,59 @@ class AuthorSerializer(serializers.ModelSerializer):
         last_updated = obj.last_updated
         return int(last_updated.timestamp()) if last_updated else None
 
+    def create(self, validated_data):
+        aliases_data = validated_data.pop("aliases_list", [])
+        tags_data = validated_data.pop("tags_list", [])
+        validated_data.pop("added", [])
+        validated_data.pop("last_updated", [])
+        author = Author.objects.create(**validated_data)
+
+        for alias in aliases_data:
+            AuthorAlias.objects.create(author=author, alias=alias)
+        for tag in tags_data:
+            tag = Tag.objects.get_or_create(name=tag)[0]
+            author.tag_set.add(tag)
+        author.save()
+
+        return author
+
+    def update(self, instance, validated_data):
+        aliases_data = validated_data.pop("aliases_list", [])
+        tags_data = validated_data.pop("tags_list", [])
+        validated_data.pop("added", [])
+        validated_data.pop("last_updated", [])
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.aliases.all().delete()
+        instance.tags.all().delete()
+        AuthorAlias.objects.filter(author=instance).delete()
+        for alias in aliases_data:
+            AuthorAlias.objects.create(author=instance, alias=alias)
+        Tag.objects.filter(authors__in=[instance]).delete()
+        for tag in tags_data:
+            tag = Tag.objects.get_or_create(name=tag)
+            instance.tag_set.add(tag)
+        instance.save()
+
+        return instance
+
     class Meta:
         model = Author
         fields = [
             "id",
             "full_name",
             "last_updated",
+            "added",
             "library_primary_name",
             "department_id",
             "aliases",
             "tags",
+            "aliases_list",
+            "tags_list",
         ]
-        read_only_fields = ["id", "last_updated", "aliases", "tags"]
+        read_only_fields = ["id", "last_updated", "added", "aliases", "tags"]
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -57,6 +101,12 @@ class DepartmentSerializer(serializers.ModelSerializer):
 class FacultySerializer(serializers.ModelSerializer):
     class Meta:
         model = Faculty
+        fields = ["id", "name"]
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
         fields = ["id", "name"]
 
 

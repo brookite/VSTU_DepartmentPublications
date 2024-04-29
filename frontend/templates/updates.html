@@ -47,13 +47,11 @@
                   class="form-control form-control-sm"
                   id="tags"
                   list="tagsList"
+                  data-for="updatesTagsContainer"
                   placeholder="Добавьте теги, разделяя их запятыми"
                 />
               </div>
-              <div id="selectedTags" class="mb-3">
-                <span class="badge bg-primary"
-                  >Магистрант <i class="ri-close-line"></i
-                ></span>
+              <div class="tagsContainer mb-3" id="updatesTagsContainer">
               </div>
               <button type="submit" class="btn btn-primary btn-sm">
                 Применить
@@ -94,7 +92,6 @@
                 </div>
               </div>
             </li>
-            <!-- Здесь можно добавить другие публикации -->
           </ul>
         </main>
       </div>

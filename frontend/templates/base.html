@@ -207,9 +207,14 @@
       </div>
     </div>
 
+    <datalist id="tagsList"></datalist>
+
     {% block after_footer_contents %}
     {% endblock %}
 
+    <script>
+        var csrftoken = '{{ csrf_token }}';
+    </script>
     <script
       src="static/app/js/main.js"
     ></script>

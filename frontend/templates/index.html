@@ -74,6 +74,7 @@
 {% endblock %}
 
 {% block after_footer_contents %}
+    {% if user.is_authenticated %}
 <div
       class="modal fade"
       id="addPersonModal"
@@ -120,51 +121,45 @@
                 <label for="tags" class="form-label">Теги</label>
                 <input
                   list="tagsList"
-                  id="tags"
-                  name="tags"
-                  class="form-control"
+                  id="addNewTags"
+                  data-for="addPersonTagsContainer"
+                  class="form-control tagsAddField"
                   placeholder="Добавьте теги, разделяя их запятыми"
                 />
-                <div id="tagsContainer" class="mt-2">
-                  <span class="badge text-bg-primary"
-                    >Магистрант <i class="ri-close-line"></i
-                  ></span>
+                <div class="tagsContainer mt-2" id="addPersonTagsContainer">
                 </div>
               </div>
               <div class="mb-3">
                 <label for="department" class="form-label">Кафедра</label>
-                <input
-                  list="departments"
-                  id="department"
-                  name="department"
-                  class="form-control"
-                  placeholder="Введите название кафедры"
-                />
+                <select id="department" name="department" class="form-control">
+                        {% for dep in departments %}
+                            <option value="{{ dep.id }}">{{ dep.name }}</option>
+                        {% endfor %}
+                    </select>
               </div>
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-primary">Сохранить</button>
+            <button type="button" id="addPersonBtn" class="btn btn-primary">Сохранить</button>
           </div>
         </div>
       </div>
     </div>
+    {% endif %}
     <div id="filterContent" class="d-none">
       <form>
         <div class="mb-3">
           <label for="tags" class="form-label">Теги</label>
           <input
             type="text"
-            class="form-control form-control-sm"
+            class="form-control form-control-sm tagsAddField"
             id="tags"
             list="tagsList"
+            data-for="searchFilterTagsContainer"
             placeholder="Добавьте теги, разделяя их запятыми"
           />
+            <div id="searchFilterTagsContainer" class="tagsContainer mb-3">
         </div>
-        <div id="selectedTags" class="mb-3">
-          <span class="badge bg-primary"
-            >Магистрант <i class="ri-close-line"></i
-          ></span>
         </div>
         <button type="button" class="btn btn-primary btn-sm" id="applyBtn">
           Применить
@@ -177,6 +172,7 @@
     <script>
       var filter = document.getElementById("filterContent").cloneNode(true);
       filter.classList.remove("d-none");
+      document.getElementById("filterContent").outerHTML = "";
       var popover = new bootstrap.Popover(
         document.getElementById("filterBtn"),
         {

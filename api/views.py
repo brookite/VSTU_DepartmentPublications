@@ -5,7 +5,6 @@ from rest_framework.decorators import api_view, action
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from api import settings
 from api.utils import APIResponse
@@ -65,16 +64,16 @@ class AuthorViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
     def delete(self, request):
-        id = request.query_params.get("id", "")
+        id = request.data.get("id", "")
         if id:
             author = Author.objects.get(id=int(id))
             author.delete()
 
     @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
     def change(self, request):
-        id = request.query_params.get("id", "")
-        aliases = request.query_params.get("aliases", "").split(",")
-        tags = request.query_params.get("tags", "").split(",")
+        id = request.data.get("id", "")
+        aliases = request.data.get("aliases", "").split(",")
+        tags = request.data.get("tags", "").split(",")
         if "" in aliases:
             aliases.remove("")
         if "" in tags:
@@ -85,24 +84,28 @@ class AuthorViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         author = Author.objects.get(pk=int(id))
-        full_name = request.query_params.get("full_name", author.full_name)
-        library_name = request.query_params.get(
-            "library_name", author.library_primary_name
-        )
-        department = request.query_params.get(
-            "department_id", author.department.department_id
-        )
+        full_name = request.data.get("full_name", author.full_name)
+        library_name = request.data.get("library_name", author.library_primary_name)
+        department = request.data.get("department_id", author.department.id)
         author.full_name = full_name
         author.library_primary_name = library_name
         author.department = Department.objects.filter(id=department).first()
-        author.tag_set.delete()
-        for tag in list(map(lambda x: Tag.objects.get_or_create(pk=x)[0], tags)):
+        author.tag_set.clear()
+        for tag in list(map(lambda x: Tag.objects.get_or_create(name=x)[0], tags)):
             author.tag_set.add(tag)
-        author.authoralias_set.delete()
-        for alias in list(map(lambda x: Tag.objects.get_or_create(pk=x)[0], aliases)):
+        for alias in author.authoralias_set.all():
+            alias.delete()
+        for alias in list(
+            map(
+                lambda x: AuthorAlias.objects.get_or_create(alias=x, author=author)[0],
+                aliases,
+            )
+        ):
             author.authoralias_set.add(alias)
         author.save()
-        serializer = self.serializer_class(data=author)
+        serializer = self.serializer_class(
+            Author.objects.filter(pk=author.pk), many=True
+        )
         return APIResponse(data=serializer.data)
 
 
@@ -183,6 +186,19 @@ class SettingsViewSet(viewsets.ViewSet):
                 obj[0].param_value = value
                 obj[0].save()
         return APIResponse(["Настройки успешно сохранены"], status=status.HTTP_200_OK)
+
+
+class TagListView(ListAPIView):
+    serializer_class = TagSerializer
+
+    def list(self, request, *args, **kwargs):
+        q = request.query_params.get("q")
+        if q:
+            queryset = Tag.objects.filter(name__icontains=q)
+        else:
+            queryset = Tag.objects.all()[: 10 * 1024]
+        serializer = self.get_serializer(queryset, many=True)
+        return APIResponse(data=serializer.data)
 
 
 @api_view(["GET"])

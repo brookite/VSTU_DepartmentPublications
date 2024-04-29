@@ -13,6 +13,7 @@ urlpatterns = [
     path("authorSuggestions/", AuthorSuggestions.as_view()),
     path("publications/", PublicationListView.as_view()),
     path("departments/", FacultyDepartmentView.as_view()),
+    path("tags/", TagListView.as_view()),
     path("stats/", stats),
 ]
 urlpatterns += author_router.urls

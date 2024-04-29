@@ -1,11 +1,15 @@
 from django.db.models import Q
 from django.shortcuts import render, redirect
 
-from api.models import Author, Publication
+from api.models import Author, Publication, Department
 
 
 def index(request):
-    return render(request, "index.html", {"user": request.user})
+    return render(
+        request,
+        "index.html",
+        {"user": request.user, "departments": Department.objects.all()},
+    )
 
 
 def updates(request):
@@ -35,6 +39,7 @@ def author_details(request):
             "aliases": author.authoralias_set.all(),
             "publications": publications,
             "user": request.user,
+            "departments": Department.objects.all(),
         },
     )
 
