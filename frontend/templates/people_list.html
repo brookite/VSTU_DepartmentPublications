@@ -1,0 +1,6 @@
+{% for author in authors %}
+<a href="#" data-author-id="{{ author.id }}" class="authorItem list-group-item list-group-item-action">
+    <!-- <span class="badge text-bg-primary rounded-pill">14</span> -->
+    {{ author.library_primary_name }}
+</a>
+{% endfor %}

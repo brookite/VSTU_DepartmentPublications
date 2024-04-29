@@ -12,6 +12,10 @@
       rel="stylesheet"
     />
     <link href="static/app/css/main.css" rel="stylesheet" />
+      <script src="static/jquery/jquery-3.7.1.min.js"></script>
+    <script
+      src="static/bootstrap/js/bootstrap.bundle.min.js"
+    ></script>
     <title>Публикации кафедры</title>
   </head>
   <body class="d-flex flex-column min-vh-100">
@@ -42,26 +46,28 @@
           </button>
           <form class="d-flex">
             <select
-              class="form-select me-2 mb-1"
+              class="form-select me-2 mb-1 facultySelect"
               aria-label="Выбор университета"
             >
-              <option selected>Выберите университет</option>
-              <!-- Здесь можно добавить опции для университетов -->
+              <option disabled>Выберите факультет</option>
             </select>
-            <select class="form-select me-1 mb-1" aria-label="Выбор кафедры">
-              <option selected>Выберите кафедру</option>
-              <!-- Здесь можно добавить опции для кафедр -->
+            <select class="form-select me-1 mb-1 departmentSelect" aria-label="Выбор кафедры">
+              <option disabled>Выберите кафедру</option>
             </select>
           </form>
-          <span class="text text-light me-2 mb-1">
-            Вы вошли как администратор
-          </span>
-          <a
-            class="icon-button me-2"
-            data-bs-toggle="modal"
-            data-bs-target="#autoUpdateModal"
-            ><i class="ri-settings-3-fill"></i
-          ></a>
+            {% if user.is_authenticated %}
+              <span class="text text-light me-2 mb-1">
+                {{ user.username }}
+                </span>
+                <a
+                class="icon-button me-2"
+                data-bs-toggle="modal"
+                data-bs-target="#autoUpdateModal"
+                ><i class="ri-settings-3-fill"></i
+              ></a>
+            {% else %}
+                <a class="text text-light me-2 mb-1" href="/api/auth/login">Войти как администратор</a>
+            {% endif %}
         </div>
       </div>
     </header>
@@ -79,13 +85,131 @@
       </div>
     </footer>
 
+    <div
+      class="modal fade"
+      id="autoUpdateModal"
+      tabindex="-1"
+      aria-labelledby="autoUpdateModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="autoUpdateModalLabel">
+              Настройки автообновления системы
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form>
+              <div class="mb-3">
+                <label for="updateInterval" class="form-label"
+                  >Интервал обновления</label
+                >
+                <select class="form-select" id="updateInterval">
+                  <option value="daily" selected>Раз в день</option>
+                  <option value="every_three_days">Раз в три дня</option>
+                  <option value="weekly">Раз в неделю</option>
+                  <option value="biweekly">Раз в две недели</option>
+                  <option value="monthly">Раз в месяц</option>
+                </select>
+              </div>
+                <div class="mb-3">
+                <label for="dayOfWeek" class="form-label"
+                  >День недели</label
+                >
+                <select class="form-select" id="dayOfWeek">
+                  <option value="monday" selected>Понедельник</option>
+                  <option value="tuesday">Вторник</option>
+                  <option value="wednesday">Среда</option>
+                  <option value="thursday">Четверг</option>
+                  <option value="friday">Пятница</option>
+                    <option value="saturday">Суббота</option>
+                  <option value="sunday">Воскресенье</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="updateTime" class="form-label"
+                  >Время обновления</label
+                >
+                <input type="time" class="form-control" id="updateTime" />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="rescheduleBtn btn btn-primary">Сохранить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="subscribeModal"
+      tabindex="-1"
+      aria-labelledby="subscribeModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title" id="subscribeModalLabel">
+              Подписаться на обновления
+            </h4>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div>
+              <h5><i class="ri-telegram-fill"></i> Telegram</h5>
+              <p>
+                Вы можете подписаться на получение публикаций с помощью нашего
+                Telegram-бота.
+              </p>
+              <a class="btn btn-primary" href="#">Перейти</a>
+            </div>
+            <hr />
+            <div>
+              <h5><i class="ri-mail-send-line"></i> Электронная почта</h5>
+              <form>
+                <div class="mb-3">
+                  <label for="email" class="form-label"
+                    >Введите вашу электронную почту</label
+                  >
+                  <input
+                    type="email"
+                    class="form-control"
+                    id="email"
+                    aria-describedby="emailHelp"
+                    placeholder="example@example.com"
+                  />
+                  <div id="emailHelp" class="form-text">
+                    Мы будем отправлять вам обновления на указанный адрес
+                    электронной почты.
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                  Подписаться
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     {% block after_footer_contents %}
     {% endblock %}
 
-    <script
-      src="static/bootstrap/js/bootstrap.bundle.min.js"
-    ></script>
     <script
       src="static/app/js/main.js"
     ></script>

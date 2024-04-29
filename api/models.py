@@ -31,6 +31,7 @@ class Department(models.Model):
 
 class Author(models.Model):
     full_name = models.CharField(max_length=255, verbose_name="ФИО")
+    added = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(null=True, verbose_name="Последнее обновление")
     library_primary_name = models.CharField(
         max_length=128, verbose_name="Инициалы для библиотеки (главные)"

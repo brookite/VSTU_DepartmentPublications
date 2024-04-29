@@ -1,0 +1,154 @@
+<div class="tab-content" id="main-tabs">
+            <div
+              class="tab-pane fade show active"
+              id="publications"
+              role="tabpanel"
+              aria-labelledby="publications-tab"
+            >
+              <h3>{{ author.full_name }}</h3>
+              <div id="tagsContainer" class="mt-2 mb-2">
+                  {% for tag in tags %}
+                      <span class="badge text-bg-primary" data-tag-id="{{ tag.pk }}">{{ tag.name }}</span>
+                  {% endfor %}
+              </div>
+              <ul class="list-group">
+                  {% for pub in publications %}
+                <li
+                  class="list-group-item d-flex justify-content-between align-items-start"
+                >
+                  <div class="ms-2 me-auto">
+                    {% autoescape off %}
+                    <div>{{ pub.html_content }}</div>
+                    {% endautoescape %}
+                    <div>
+                      <small class="text-muted"
+                        ><i class="ri-calendar-line"></i>{{ pub.added_date }}</small
+                      >
+                    </div>
+                      {% if pub.department %}
+                    <div>
+                      <small class="text-muted"
+                        ><i class="ri-graduation-cap-line"></i> {{ pub.department.name }}</small
+                      >
+                    </div>
+                      {% endif %}
+                  </div>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+            <div
+              class="tab-pane fade"
+              id="information"
+              role="tabpanel"
+              aria-labelledby="information-tab"
+            >
+              <section>
+                <h2>Информация о пользователе</h2>
+                <form>
+                  <div class="mb-3">
+                    <label for="fullName" class="form-label">ФИО</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="fullName"
+                      placeholder="Введите ФИО"
+                      value="{{ author.full_name }}"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="lastNameInitials" class="form-label"
+                      >Фамилия и инициалы</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="lastNameInitials"
+                      placeholder="Введите фамилию и инициалы"
+                      value="{{ author.library_primary_name }}"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="department" class="form-label">Кафедра</label>
+                    <input
+                      list="departments"
+                      id="department"
+                      name="department"
+                      class="form-control"
+                      placeholder="Введите название кафедры"
+                      value="{{ author.department.name }}"
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="tags" class="form-label">Теги</label>
+                    <input
+                      list="tagsList"
+                      id="tags"
+                      name="tags"
+                      class="form-control"
+                      placeholder="Добавьте теги, разделяя их запятыми"
+                    />
+                    <div id="tagsContainer" class="mt-2">
+                        {% for tag in tags %}
+                      <span data-tag-id="{{ tag.pk }}" class="badge text-bg-primary"
+                        >{{ tag.name }} <i class="removeTag ri-close-line"></i
+                      ></span>
+                        {% endfor %}
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label for="dateAdded" class="form-label"
+                      >Дата добавления</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="dateAdded"
+                      value="{{ author.added }}"
+                      disabled
+                    />
+                  </div>
+                    <div class="mb-3">
+                    <label for="dateUpdated" class="form-label"
+                      >Дата обновления</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="dateUpdated"
+                      value="{{ author.last_updated }}"
+                      disabled
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="nameAliases" class="form-label"
+                      >Обозначения имени</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="nameAliases"
+                      placeholder="Добавьте обозначения, разделяя их запятыми"
+                    />
+                    <div id="aliasesContainer" class="mt-2">
+                        {% for alias in aliases %}
+                      <span class="badge text-bg-secondary"
+                        > {{ alias.alias }}<i class="removeAlias ri-close-line"></i
+                      ></span>
+                        {% endfor %}
+                    </div>
+                    <small class="text-muted"
+                      >Добавление обозначений не рекомендуется из-за возможной
+                      нагрузки на систему</small
+                    >
+                  </div>
+                  <button type="submit" class="saveRecordBtn btn btn-primary">
+                    Сохранить изменения
+                  </button>
+                  <button type="button" class="removeRecordBtn btn btn-danger">
+                    Удалить запись
+                  </button>
+                </form>
+              </section>
+            </div>
+          </div>

@@ -1,1 +1,130 @@
 {% extends 'base.html' %}
+
+{% block body_contents %}
+    <div class="container pt-3 flex-grow-1">
+      <div class="row">
+        <nav class="col-md-3 col-lg-4 d-md-block bg-light sidebar">
+          <div class="position-sticky">
+            <a class="link-underline link-underline-opacity-0" href="/"><i class="ri-arrow-left-s-line"></i> Назад</a>
+            <h5 class="card-title">Фильтр</h5>
+            <form>
+              <div class="row mb-3">
+                <div class="col">
+                  <label for="dateFrom" class="form-label"
+                    >Дата добавления (от)</label
+                  >
+                  <input
+                    type="date"
+                    class="form-control form-control-sm"
+                    id="dateFrom"
+                  />
+                </div>
+                <div class="col">
+                  <label for="dateTo" class="form-label"
+                    >Дата добавления (до)</label
+                  >
+                  <input
+                    type="date"
+                    class="form-control form-control-sm"
+                    id="dateTo"
+                  />
+                </div>
+              </div>
+              <div class="mb-3 form-check form-switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="attachedToDepartment"
+                />
+                <label class="form-check-label" for="attachedToDepartment"
+                  >В библиотеке привязан к кафедре</label
+                >
+              </div>
+              <div class="mb-3">
+                <label for="tags" class="form-label">Теги</label>
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  id="tags"
+                  list="tagsList"
+                  placeholder="Добавьте теги, разделяя их запятыми"
+                />
+              </div>
+              <div id="selectedTags" class="mb-3">
+                <span class="badge bg-primary"
+                  >Магистрант <i class="ri-close-line"></i
+                ></span>
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">
+                Применить
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm"
+                id="resetBtn"
+              >
+                Сбросить фильтр
+              </button>
+            </form>
+          </div>
+        </nav>
+
+        <main class="col-md-9 ms-sm-auto col-lg-8 px-md-4">
+          <ul class="list-group">
+            <h4 class="list-group-item">Март 2024</h4>
+            <li
+              class="list-group-item d-flex justify-content-between align-items-start"
+            >
+              <div class="ms-2 me-auto">
+                <div class="fw-bold">Название публикации</div>
+                <div>
+                  <span class="text-muted"
+                    ><i class="ri-user-fill"></i> ФИО</span
+                  >
+                </div>
+                <div>
+                  <small class="text-muted"
+                    ><i class="ri-calendar-line"></i> Дата добавления</small
+                  >
+                </div>
+                <div>
+                  <small class="text-muted"
+                    ><i class="ri-graduation-cap-line"></i> Кафедра</small
+                  >
+                </div>
+              </div>
+            </li>
+            <!-- Здесь можно добавить другие публикации -->
+          </ul>
+        </main>
+      </div>
+    </div>
+{% endblock %}
+
+{% block after_footer_contents %}
+    <div id="filterContent" class="d-none">
+      <form>
+        <div class="mb-3">
+          <label for="tags" class="form-label">Теги</label>
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            id="tags"
+            list="tagsList"
+            placeholder="Добавьте теги, разделяя их запятыми"
+          />
+        </div>
+        <div id="selectedTags" class="mb-3">
+          <span class="badge bg-primary"
+            >Магистрант <i class="ri-close-line"></i
+          ></span>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="applyBtn">
+          Применить
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" id="resetBtn">
+          Сбросить фильтр
+        </button>
+      </form>
+    </div>
+{% endblock %}

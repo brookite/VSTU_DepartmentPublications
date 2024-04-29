@@ -3,11 +3,13 @@ from datetime import datetime
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.generics import ListAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api import settings
 from api.utils import APIResponse
+from autoupdate.strategy import calculate_next_global_update, calculate_next_update
 from core.vstulib import VSTULibrary
 from api.serializers import *
 
@@ -43,11 +45,12 @@ class AuthorViewSet(viewsets.ViewSet):
         serializer = self.serializer_class(queryset, many=True)
         return APIResponse(serializer.data)
 
-    @action(detail=False, methods=["post"])
+    @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
     def add(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            author = serializer.save()
+            ShortUpdateTasks.objects.create(author=author)
             return APIResponse(serializer.data, status=status.HTTP_201_CREATED)
         return APIResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -60,39 +63,45 @@ class AuthorViewSet(viewsets.ViewSet):
             return APIResponse(output_serializer.data, status=status.HTTP_200_OK)
         return APIResponse(input_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=["post"])
-    def changeTagList(self, request):
+    @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
+    def delete(self, request):
         id = request.query_params.get("id", "")
-        tags = request.query_params.get("tags", "")
-        if not id or not tags:
-            return APIResponse(
-                message="id and tags is required",
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        author = Author.objects.get(pk=int(id))
-        author.tag_set.delete()
-        for tag in list(
-            map(lambda x: Tag.objects.get_or_create(pk=x)[0], tags.split(","))
-        ):
-            author.tag_set.add(tag)
-        serializer = self.serializer_class(data=author)
-        return APIResponse(data=serializer.data)
+        if id:
+            author = Author.objects.get(id=int(id))
+            author.delete()
 
-    @action(detail=False, methods=["post"])
-    def changeAliasList(self, request):
+    @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
+    def change(self, request):
         id = request.query_params.get("id", "")
-        aliases = request.query_params.get("aliases", "")
-        if not id or not aliases:
+        aliases = request.query_params.get("aliases", "").split(",")
+        tags = request.query_params.get("tags", "").split(",")
+        if "" in aliases:
+            aliases.remove("")
+        if "" in tags:
+            tags.remove("")
+        if not id:
             return APIResponse(
-                message="id and aliases is required",
+                message="id is required",
                 status=status.HTTP_400_BAD_REQUEST,
             )
         author = Author.objects.get(pk=int(id))
+        full_name = request.query_params.get("full_name", author.full_name)
+        library_name = request.query_params.get(
+            "library_name", author.library_primary_name
+        )
+        department = request.query_params.get(
+            "department_id", author.department.department_id
+        )
+        author.full_name = full_name
+        author.library_primary_name = library_name
+        author.department = Department.objects.filter(id=department).first()
+        author.tag_set.delete()
+        for tag in list(map(lambda x: Tag.objects.get_or_create(pk=x)[0], tags)):
+            author.tag_set.add(tag)
         author.authoralias_set.delete()
-        for alias in list(
-            map(lambda x: Tag.objects.get_or_create(pk=x)[0], aliases.split(","))
-        ):
+        for alias in list(map(lambda x: Tag.objects.get_or_create(pk=x)[0], aliases)):
             author.authoralias_set.add(alias)
+        author.save()
         serializer = self.serializer_class(data=author)
         return APIResponse(data=serializer.data)
 
@@ -166,7 +175,7 @@ class SettingsViewSet(viewsets.ViewSet):
             result_dict[setting.param_name] = setting.param_value
         return APIResponse(result_dict)
 
-    @action(detail=False, methods=["post"])
+    @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
     def change(self, request):
         changed_dict = request.data
         for key, value in changed_dict.items():
@@ -185,4 +194,6 @@ def stats(request):
     result_dict["last_author_update"] = int(
         settings.Timestamps().last_update.timestamp()
     )
+    result_dict["next_global_update"] = int(calculate_next_global_update().timestamp())
+    result_dict["next_update"] = int(calculate_next_update().timestamp())
     return APIResponse(result_dict)

@@ -1,1 +1,188 @@
 {% extends 'base.html' %}
+
+{% block body_contents %}
+<div class="container pt-3 flex-grow-1">
+      <div class="row">
+        <nav class="col-md-5 col-lg-3 d-md-block bg-light sidebar">
+          <div class="position-sticky">
+            <form class="d-flex mt-3">
+              <input
+                class="form-control me-2 searchField"
+                type="text"
+                placeholder="Поиск"
+                aria-label="Поиск"
+              />
+                {%  if user.is_authenticated %}
+              <button
+                class="btn btn-primary me-1 ri-add-line"
+                data-bs-toggle="modal"
+                data-bs-target="#addPersonModal"
+                type="button"
+              ></button>
+                {% endif %}
+              <button
+                type="button"
+                class="btn btn-secondary ri-filter-2-fill"
+                id="filterBtn"
+                data-bs-toggle="popover"
+                data-bs-placement="bottom"
+                title="Фильтр"
+              ></button>
+            </form>
+            <h5 class="m-2">Список людей</h5>
+            <div class="list-group authorList">
+
+            </div>
+          </div>
+        </nav>
+
+        <main class="col-md-7 ms-sm-auto col-lg-9 px-md-4 mainView">
+          <ul class="nav nav-tabs mb-3" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link active"
+                id="publications-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#publications"
+                type="button"
+                role="tab"
+                aria-controls="publications"
+                aria-selected="true"
+              >
+                Публикации
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="information-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#information"
+                type="button"
+                role="tab"
+                aria-controls="information"
+                aria-selected="false"
+              >
+                Информация
+              </button>
+            </li>
+          </ul>
+            <div class="publView"></div>
+        </main>
+      </div>
+    </div>
+{% endblock %}
+
+{% block after_footer_contents %}
+<div
+      class="modal fade"
+      id="addPersonModal"
+      tabindex="-1"
+      aria-labelledby="addPersonModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title" id="addPersonModalLabel">
+              Добавить нового человека
+            </h4>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form>
+              <div class="mb-3">
+                <label for="fullName" class="form-label">ФИО</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="fullName"
+                  placeholder="Введите ФИО"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="lastNameInitials" class="form-label"
+                  >Фамилия и инициалы</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="lastNameInitials"
+                  placeholder="Введите фамилию и инициалы"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="tags" class="form-label">Теги</label>
+                <input
+                  list="tagsList"
+                  id="tags"
+                  name="tags"
+                  class="form-control"
+                  placeholder="Добавьте теги, разделяя их запятыми"
+                />
+                <div id="tagsContainer" class="mt-2">
+                  <span class="badge text-bg-primary"
+                    >Магистрант <i class="ri-close-line"></i
+                  ></span>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="department" class="form-label">Кафедра</label>
+                <input
+                  list="departments"
+                  id="department"
+                  name="department"
+                  class="form-control"
+                  placeholder="Введите название кафедры"
+                />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary">Сохранить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="filterContent" class="d-none">
+      <form>
+        <div class="mb-3">
+          <label for="tags" class="form-label">Теги</label>
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            id="tags"
+            list="tagsList"
+            placeholder="Добавьте теги, разделяя их запятыми"
+          />
+        </div>
+        <div id="selectedTags" class="mb-3">
+          <span class="badge bg-primary"
+            >Магистрант <i class="ri-close-line"></i
+          ></span>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="applyBtn">
+          Применить
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" id="resetBtn">
+          Сбросить фильтр
+        </button>
+      </form>
+    </div>
+    <script>
+      var filter = document.getElementById("filterContent").cloneNode(true);
+      filter.classList.remove("d-none");
+      var popover = new bootstrap.Popover(
+        document.getElementById("filterBtn"),
+        {
+          content: filter,
+          html: true,
+        }
+      );
+    </script>
+{% endblock %}
