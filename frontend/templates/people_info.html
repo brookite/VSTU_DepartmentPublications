@@ -142,12 +142,14 @@
                       нагрузки на систему</small
                     >
                   </div>
+                {% if user.is_authenticated %}
                   <button type="submit" class="saveRecordBtn btn btn-primary">
                     Сохранить изменения
                   </button>
                   <button type="button" class="removeRecordBtn btn btn-danger">
                     Удалить запись
                   </button>
+                {% endif %}
                 </form>
               </section>
             </div>

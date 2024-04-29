@@ -34,6 +34,7 @@ def author_details(request):
             "tags": author.tag_set.all(),
             "aliases": author.authoralias_set.all(),
             "publications": publications,
+            "user": request.user,
         },
     )
 
