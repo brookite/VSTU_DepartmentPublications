@@ -63,7 +63,7 @@ class AuthorAlias(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=48, verbose_name="Название")
+    name = models.CharField(max_length=48, verbose_name="Название", unique=True)
     authors = ManyToManyField(Author, verbose_name="Авторы")
 
     class Meta:
