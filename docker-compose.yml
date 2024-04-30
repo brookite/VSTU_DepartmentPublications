@@ -1,0 +1,58 @@
+version: '3.8'
+
+volumes:
+  static:
+  logs:
+  media:
+  postgres_data:
+
+services:
+
+  django:
+    build:
+      context: .
+    ports:
+      - '8000:8000'
+    container_name: django
+    restart: always
+    depends_on:
+      - db
+    env_file:
+      - .env
+    environment:
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_HOST: localhost
+    volumes:
+      - ./:/app
+      - static:/app/static
+      - media:/app/media
+      - logs:/app/logs
+    command: "sh run_system.sh"
+
+  db:
+    image: postgres:latest
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: DepartmentPublications
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  nginx:
+    container_name: nginx
+    working_dir: /app
+    image: nginx:stable-alpine
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - static:/app/static
+      - media:/app/media
+      - ./deploy/nginx/:/etc/nginx/conf.d:ro
+    links:
+      - django
+    depends_on:
+      - django
