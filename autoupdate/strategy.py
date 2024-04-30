@@ -189,6 +189,8 @@ def autoupdate_author(author: Author):
 
 
 def short_task_batch():
+    if Department.objects.count() == 0:
+        _update_university_info()
     if ShortUpdateTasks.objects.count() == 0:
         return
     global_update_time = calculate_next_global_update()
