@@ -10,7 +10,7 @@ class Settings:
         defaults = [
             {"param_name": "request_batch_size", "param_value": 3},
             {"param_name": "short_task_batch_update_delay", "param_value": 5 * 3600},
-            {"param_name": "obsolescence_time_seconds", "param_value": 3},
+            {"param_name": "obsolescence_time_seconds", "param_value": 24 * 3600},
             {"param_name": "max_short_tasks", "param_value": 8},
             {"param_name": "short_tasks_check_interval", "param_value": 300},
             {"param_name": "cron_schedule", "param_value": "2 0 * * 5"},

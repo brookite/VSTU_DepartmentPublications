@@ -98,7 +98,9 @@ def _update_university_info():
     logger.info("Информация об университете обновлена")
 
 
-def _autoupdate_author(author: Author, use_alias: Optional[str] = None):
+def _autoupdate_author(
+    author: Author, use_alias: Optional[str] = None, allow_removing: bool = False
+):
     name = author.library_primary_name if not use_alias else use_alias
     library_publications = set(
         map(
@@ -110,7 +112,10 @@ def _autoupdate_author(author: Author, use_alias: Optional[str] = None):
         map(lambda x: x.html_content, Publication.objects.filter(authors__in=[author]))
     )
     new_publications = library_publications - local_publications
-    removed_publications = local_publications - library_publications
+    if allow_removing:
+        removed_publications = local_publications - library_publications
+    else:
+        removed_publications = set()
     logger.debug(
         f"Найдено {len(new_publications)} новых публикаций, удалению подлежит {len(removed_publications)} публикаций"
     )
@@ -118,6 +123,7 @@ def _autoupdate_author(author: Author, use_alias: Optional[str] = None):
         pub, created = Publication.objects.get_or_create(html_content=new)
         pub.authors.add(author)
         pub.save()
+    # Recommended disable removing publications with compatibility with aliases
     for old in removed_publications:
         logger.debug(f"Удаление публикации: {old}")
         publications = Publication.objects.filter(html_content=old)
@@ -164,7 +170,7 @@ def _autoupdate_author_by_department(
 
 def autoupdate_author(author: Author):
     logger.debug(f"Обновление автора {author.library_primary_name} [{author.pk}]")
-    _autoupdate_author(author)
+    _autoupdate_author(author, allow_removing=True)
     logger.debug(
         f"Обновление автора {author.library_primary_name} [{author.pk}] по кафедре {author.department.name}"
     )
@@ -179,6 +185,7 @@ def autoupdate_author(author: Author):
     author.last_updated = datetime.datetime.now().replace(
         tzinfo=timezone.get_current_timezone()
     )
+    author.save()
 
 
 def short_task_batch():
@@ -231,10 +238,9 @@ def global_autoupdate(skip_university_update=False):
             )
             < obsolescence_time
         ):
-            return
+            continue
         try:
             autoupdate_author(author)
-            author.save()
         except Exception as e:
             logger.error(
                 f"Неизвестная ошибка при обновлении автора {author.library_primary_name}, {author.pk}",

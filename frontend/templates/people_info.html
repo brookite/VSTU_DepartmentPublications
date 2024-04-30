@@ -147,7 +147,11 @@
                       type="text"
                       class="form-control"
                       id="dateUpdated"
+                      {% if author.last_updated %}
                       value="{{ author.last_updated }}"
+                      {% else %}
+                      value="Еще не обновлялся"
+                      {% endif %}
                       disabled
                     />
                   </div>
