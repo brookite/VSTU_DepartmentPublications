@@ -22,7 +22,11 @@ def updates(request):
 
 def author_list(request):
     q = request.GET.get("q", "")
-    dep_id = int(request.GET.get("department"))
+    dep_id = request.GET.get("department")
+    if dep_id:
+        dep_id = int(dep_id)
+    else:
+        dep_id = None
     tags = request.GET.get("tags", "").split(",")
     if "" in tags:
         tags.remove("")

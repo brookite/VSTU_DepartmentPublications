@@ -29,16 +29,18 @@ def calculate_next_update():
     last_update = TIMESTAMPS.last_short_update
     global_update_time = calculate_next_global_update()
     if ShortUpdateTasks.objects.count() > 0:
-        if datetime.datetime.now() <= last_update + datetime.timedelta(
+        if datetime.datetime.now().replace(
+            tzinfo=timezone.get_current_timezone()
+        ) <= last_update + datetime.timedelta(
             seconds=SETTINGS.short_task_batch_update_delay
         ):
             next_update_time = last_update + datetime.timedelta(
                 seconds=SETTINGS.short_task_batch_update_delay
             )
         else:
-            next_update_time = datetime.datetime.now() + datetime.timedelta(
-                seconds=SETTINGS.short_tasks_check_interval
-            )
+            next_update_time = datetime.datetime.now().replace(
+                tzinfo=timezone.get_current_timezone()
+            ) + datetime.timedelta(seconds=SETTINGS.short_tasks_check_interval)
         if (
             abs(delta_seconds(global_update_time, next_update_time))
             < SETTINGS.obsolescence_time_seconds
@@ -51,14 +53,18 @@ def calculate_next_update():
 
 
 def calculate_next_global_update():
-    return croniter(SETTINGS.cron_schedule, datetime.datetime.now()).get_next(
-        datetime.datetime
-    )
+    return croniter(
+        SETTINGS.cron_schedule,
+        datetime.datetime.now().replace(tzinfo=timezone.get_current_timezone()),
+    ).get_next(datetime.datetime)
 
 
 def schedule_short_task(author: Author):
     if (
-        delta_seconds(calculate_next_global_update(), datetime.datetime.now())
+        delta_seconds(
+            calculate_next_global_update(),
+            datetime.datetime.now().replace(tzinfo=timezone.get_current_timezone()),
+        )
         <= SETTINGS.obsolescence_time_seconds
     ):
         logger.debug(
@@ -87,10 +93,10 @@ def _update_university_info():
             dto.Faculty(faculty.name, faculty.library_id)
         )
         for dep in deps:
-            logger.info(
-                f"Добавляю новую кафедру {dep.name} [{dep.id}] в {faculty.name} [{faculty.library_id}]"
-            )
             if not Department.objects.filter(library_id=dep.id).exists():
+                logger.info(
+                    f"Добавляю новую кафедру {dep.name} [{dep.id}] в {faculty.name} [{faculty.library_id}]"
+                )
                 Department.objects.create(
                     name=dep.name, library_id=dep.id, faculty=faculty
                 )
@@ -196,14 +202,21 @@ def short_task_batch():
     global_update_time = calculate_next_global_update()
     last_update = TIMESTAMPS.last_short_update
     if (
-        delta_seconds(global_update_time, datetime.datetime.now())
+        abs(
+            delta_seconds(
+                global_update_time,
+                datetime.datetime.now().replace(tzinfo=timezone.get_current_timezone()),
+            )
+        )
         < SETTINGS.obsolescence_time_seconds
     ):
         logger.debug(
-            f"{global_update_time} будет глобальное автообновление, не выполняю одиночные задачи"
+            f"{global_update_time} будет/было глобальное автообновление, не выполняю одиночные задачи"
         )
         return
-    if datetime.datetime.now() <= last_update + datetime.timedelta(
+    if datetime.datetime.now().replace(
+        tzinfo=timezone.get_current_timezone()
+    ) <= last_update + datetime.timedelta(
         seconds=SETTINGS.short_task_batch_update_delay
     ):
         logger.debug(

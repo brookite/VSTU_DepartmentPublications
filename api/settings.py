@@ -13,7 +13,7 @@ class Settings:
             {"param_name": "obsolescence_time_seconds", "param_value": 24 * 3600},
             {"param_name": "max_short_tasks", "param_value": 8},
             {"param_name": "short_tasks_check_interval", "param_value": 300},
-            {"param_name": "cron_schedule", "param_value": "2 0 * * 5"},
+            {"param_name": "cron_schedule", "param_value": "0 2 * * 5"},
         ]
 
         for default in defaults:
@@ -103,16 +103,16 @@ class Settings:
         hour, minute = at_time // 3600, at_time % 3600
         if every_day_month:
             if num_day_of_week:
-                cron = f"{hour} {minute} */{every_day_month} * {num_day_of_week}"
+                cron = f"{minute} {hour} */{every_day_month} * {num_day_of_week}"
             else:
-                cron = f"{hour} {minute} */{every_day_month} * *"
+                cron = f"{minute} {hour} */{every_day_month} * *"
         elif every_day_week:
-            cron = f"{hour} {minute} * * */{every_day_week}"
+            cron = f"{minute} {hour} * * */{every_day_week}"
         elif every_month:
             if num_day_of_week:
-                cron = f"{hour} {minute} * */{every_month} {num_day_of_week}"
+                cron = f"{minute} {hour} * */{every_month} {num_day_of_week}"
             else:
-                cron = f"{hour} {minute} * */{every_month} *"
+                cron = f"{minute} {hour} * */{every_month} *"
         setting = SettingsModel.objects.get(param_name="cron_schedule")
         setting.param_value = cron
         setting.save()

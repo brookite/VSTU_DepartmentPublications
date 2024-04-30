@@ -18,8 +18,8 @@ class AuthorSerializer(serializers.ModelSerializer):
     tags = serializers.SerializerMethodField()
     last_updated = serializers.SerializerMethodField()
 
-    aliases_list = serializers.ListField(child=serializers.CharField(), required=False)
-    tags_list = serializers.ListField(child=serializers.CharField(), required=False)
+    aliases_list = serializers.CharField(required=False)
+    tags_list = serializers.CharField(required=False)
 
     def get_aliases(self, obj):
         author_aliases = AuthorAlias.objects.filter(author=obj)
@@ -35,7 +35,11 @@ class AuthorSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         aliases_data = validated_data.pop("aliases_list", [])
+        if isinstance(aliases_data, str):
+            aliases_data = aliases_data.split(",")
         tags_data = validated_data.pop("tags_list", [])
+        if isinstance(tags_data, str):
+            tags_data = tags_data.split(",")
         validated_data.pop("added", [])
         validated_data.pop("last_updated", [])
         author = Author.objects.create(**validated_data)

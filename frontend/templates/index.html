@@ -68,40 +68,40 @@
           <div class="modal-body">
             <form>
               <div class="mb-3">
-                <label for="fullName" class="form-label">ФИО</label>
+                <label for="addFullName" class="form-label">ФИО</label>
                 <input
                   type="text"
                   class="form-control"
-                  id="fullName"
+                  id="addFullName"
                   placeholder="Введите ФИО"
                 />
               </div>
               <div class="mb-3">
-                <label for="lastNameInitials" class="form-label"
+                <label for="addLastNameInitials" class="form-label"
                   >Фамилия и инициалы</label
                 >
                 <input
                   type="text"
                   class="form-control"
-                  id="lastNameInitials"
+                  id="addLastNameInitials"
                   placeholder="Введите фамилию и инициалы"
                 />
               </div>
               <div class="mb-3">
-                <label for="tags" class="form-label">Теги</label>
+                <label for="addNewTags" class="form-label">Теги</label>
                 <input
                   list="tagsList"
                   id="addNewTags"
                   data-for="addPersonTagsContainer"
                   class="form-control tagsAddField"
-                  placeholder="Добавьте теги, разделяя их запятыми"
+                  placeholder="Добавьте теги, разделяя их нажатием Enter"
                 />
                 <div class="tagsContainer mt-2" id="addPersonTagsContainer">
                 </div>
               </div>
               <div class="mb-3">
-                <label for="department" class="form-label">Кафедра</label>
-                <select id="department" name="department" class="form-control">
+                <label for="addDepartment" class="form-label">Кафедра</label>
+                <select id="addDepartment" name="department" class="form-control">
                         {% for dep in departments %}
                             <option value="{{ dep.id }}">{{ dep.name }}</option>
                         {% endfor %}
@@ -126,7 +126,7 @@
             id="tagsFilter"
             list="tagsList"
             data-for="searchFilterTagsContainer"
-            placeholder="Добавьте теги, разделяя их запятыми"
+            placeholder="Добавьте теги, разделяя их нажатием Enter"
           />
             <div id="searchFilterTagsContainer" class="tagsContainer mb-3">
         </div>

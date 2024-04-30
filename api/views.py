@@ -67,6 +67,7 @@ class AuthorViewSet(viewsets.ViewSet):
         if id:
             author = Author.objects.get(id=int(id))
             author.delete()
+        return APIResponse(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
     def change(self, request):
@@ -203,13 +204,15 @@ class TagListView(ListAPIView):
 @api_view(["GET"])
 def stats(request):
     from autoupdate.strategy import calculate_next_global_update, calculate_next_update
+
     stats = Timestamps.objects.all()
     result_dict = {}
     for stat in stats:
         result_dict[stat.param_name] = int(stat.timestamp.timestamp())
-    result_dict["last_author_update"] = int(
-        settings.Timestamps().last_update.timestamp()
-    )
+
+    last_author_update = settings.Timestamps().last_update
+    if last_author_update:
+        result_dict["last_author_update"] = int(last_author_update.timestamp())
     result_dict["next_global_update"] = int(calculate_next_global_update().timestamp())
     result_dict["next_update"] = int(calculate_next_update().timestamp())
     return APIResponse(result_dict)

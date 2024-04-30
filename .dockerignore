@@ -1,4 +1,4 @@
-.env
+dev.env
 .git/
 .venv/
 .idea/

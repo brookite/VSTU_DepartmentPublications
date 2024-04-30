@@ -297,9 +297,9 @@ if (!(secondaryEndpoints.includes(endpoint))) {
   })
 
   $('#addPersonBtn').click(function () {
-      var fullName = $('#fullName').val();
-      var lastNameInitials = $('#lastNameInitials').val();
-      var department = $('#department').val();
+      var fullName = $('#addFullName').val();
+      var lastNameInitials = $('#addLastNameInitials').val();
+      var department = $('#addDepartment').val();
       var tags = updateTagList("addPersonTagsContainer");
 
       var data = {
