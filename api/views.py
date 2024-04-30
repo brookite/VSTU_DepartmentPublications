@@ -213,3 +213,29 @@ def stats(request):
     result_dict["next_global_update"] = int(calculate_next_global_update().timestamp())
     result_dict["next_update"] = int(calculate_next_update().timestamp())
     return APIResponse(result_dict)
+
+
+class PlanUpdateView(APIView):
+    def post(self, request):
+        update_interval = request.data["updateInterval"]
+        day_of_week = request.data["dayOfWeek"]
+        update_time = request.data["updateTime"].split(":")
+        update_time = int(update_time[0]) * 3600 + int(update_time[1]) * 60
+        if update_interval == "daily":
+            interval, count = "day", 1
+        elif update_interval == "weekly":
+            interval, count = "week", 1
+        elif update_interval == "monthly":
+            interval, count = "month", 1
+        elif update_interval == "biweekly":
+            interval, count = "week", 2
+        elif update_interval == "every_three_days":
+            interval, count = "day", 3
+        else:
+            return APIResponse(
+                message="Invalid data", status=status.HTTP_400_BAD_REQUEST
+            )
+
+        settingsobj = settings.Settings()
+        settingsobj.plan_autoupdate(interval, count, day_of_week, update_time)
+        return APIResponse(status=status.HTTP_200_OK)

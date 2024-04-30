@@ -107,14 +107,17 @@
           </div>
           <div class="modal-body">
             <form>
+                <div class="mb-3">
+                    <small>Сохраненное расписание на данный момент не показывается ниже</small>
+                </div>
               <div class="mb-3">
                 <label for="updateInterval" class="form-label"
                   >Интервал обновления</label
                 >
-                <select class="form-select" id="updateInterval">
+                <select class="form-select" name="updateInterval" id="updateInterval">
                   <option value="daily" selected>Раз в день</option>
                   <option value="every_three_days">Раз в три дня</option>
-                  <option value="weekly">Раз в неделю</option>
+                  <option value="weekly" selected>Раз в неделю</option>
                   <option value="biweekly">Раз в две недели</option>
                   <option value="monthly">Раз в месяц</option>
                 </select>
@@ -123,12 +126,12 @@
                 <label for="dayOfWeek" class="form-label"
                   >День недели</label
                 >
-                <select class="form-select" id="dayOfWeek">
-                  <option value="monday" selected>Понедельник</option>
+                <select class="form-select" name="dayOfWeek" id="dayOfWeek">
+                  <option value="monday">Понедельник</option>
                   <option value="tuesday">Вторник</option>
                   <option value="wednesday">Среда</option>
                   <option value="thursday">Четверг</option>
-                  <option value="friday">Пятница</option>
+                  <option value="friday" selected>Пятница</option>
                     <option value="saturday">Суббота</option>
                   <option value="sunday">Воскресенье</option>
                 </select>
@@ -137,7 +140,7 @@
                 <label for="updateTime" class="form-label"
                   >Время обновления</label
                 >
-                <input type="time" class="form-control" id="updateTime" />
+                <input type="time" value="03:00" class="form-control" name="updateTime" id="updateTime" />
               </div>
             </form>
           </div>
@@ -206,6 +209,13 @@
         </div>
       </div>
     </div>
+
+
+
+    <div
+      class="toast-container position-fixed bottom-0 end-0 p-3"
+      style="z-index: 10000"
+    ></div>
 
     <datalist id="tagsList"></datalist>
 

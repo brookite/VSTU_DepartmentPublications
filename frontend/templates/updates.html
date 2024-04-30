@@ -44,7 +44,7 @@
                 <label for="tags" class="form-label">Теги</label>
                 <input
                   type="text"
-                  class="form-control form-control-sm"
+                  class="form-control form-control-sm tagsAddField"
                   id="tags"
                   list="tagsList"
                   data-for="updatesTagsContainer"
@@ -53,13 +53,13 @@
               </div>
               <div class="tagsContainer mb-3" id="updatesTagsContainer">
               </div>
-              <button type="submit" class="btn btn-primary btn-sm">
+              <button type="submit" id="applyFilterBtn" class="btn btn-primary btn-sm">
                 Применить
               </button>
               <button
                 type="button"
                 class="btn btn-secondary btn-sm"
-                id="resetBtn"
+                id="resetFilterBtn"
               >
                 Сбросить фильтр
               </button>
@@ -67,32 +67,8 @@
           </div>
         </nav>
 
-        <main class="col-md-9 ms-sm-auto col-lg-8 px-md-4">
-          <ul class="list-group">
-            <h4 class="list-group-item">Март 2024</h4>
-            <li
-              class="list-group-item d-flex justify-content-between align-items-start"
-            >
-              <div class="ms-2 me-auto">
-                <div class="fw-bold">Название публикации</div>
-                <div>
-                  <span class="text-muted"
-                    ><i class="ri-user-fill"></i> ФИО</span
-                  >
-                </div>
-                <div>
-                  <small class="text-muted"
-                    ><i class="ri-calendar-line"></i> Дата добавления</small
-                  >
-                </div>
-                <div>
-                  <small class="text-muted"
-                    ><i class="ri-graduation-cap-line"></i> Кафедра</small
-                  >
-                </div>
-              </div>
-            </li>
-          </ul>
+        <main class="mainView col-md-9 ms-sm-auto col-lg-8 px-md-4">
+
         </main>
       </div>
     </div>

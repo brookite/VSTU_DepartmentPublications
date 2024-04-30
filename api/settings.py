@@ -122,7 +122,12 @@ class Settings:
 class Timestamps:
     def __init__(self):
         defaults = [
-            {"param_name": "last_global_update", "timestamp": datetime.datetime.now()},
+            {
+                "param_name": "last_global_update",
+                "timestamp": datetime.datetime.now().replace(
+                    tzinfo=timezone.get_current_timezone()
+                ),
+            },
             {
                 "param_name": "last_short_tasks_batch",
                 "timestamp": datetime.datetime.fromtimestamp(0),

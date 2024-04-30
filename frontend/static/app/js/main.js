@@ -10,7 +10,22 @@ $.ajaxSetup({
         }
 });
 
-function flash(text) {}
+function flash(text) {
+    let id = Math.floor(Math.random() * 10000);
+    const body = `
+    <div id="${id}" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          ${text}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+    `;
+    document.querySelector(".toast-container").innerHTML += body;
+    let toast = new bootstrap.Toast(document.getElementById(id));
+    toast.show();
+}
 
 function setDepartments(facultyId) {
   $(".departmentSelect").html("");
@@ -27,7 +42,7 @@ function setDepartments(facultyId) {
     }
   }
   localStorage.setItem("facultyId", parseInt(facultyId));
-  if (!(endpoint in secondaryEndpoints)) {
+  if (!(secondaryEndpoints.includes(endpoint))) {
     fetchSuggestions("")
   }
 }
@@ -37,7 +52,7 @@ $(".facultySelect").on("change", (e) => {
 });
 $(".departmentSelect").on("change", (e) => {
   localStorage.setItem("departmentId", parseInt(e.target.value));
-  if (!(endpoint in secondaryEndpoints)) {
+  if (!(secondaryEndpoints.includes(endpoint))) {
     fetchSuggestions("")
   }
 });
@@ -80,19 +95,7 @@ $.ajax({
 });
 
 let timeoutId;
-const searchInput = document.querySelector(".searchField");
 
-searchInput.addEventListener("input", function () {
-  clearTimeout(timeoutId);
-  timeoutId = setTimeout(function () {
-    const query = searchInput.value.trim();
-    if (query.length > 0) {
-      fetchSuggestions(query);
-    } else {
-      document.querySelector(".authorList").innerHTML = "";
-    }
-  }, 500);
-});
 
 function fetchSuggestions(query) {
   $.ajax({
@@ -217,7 +220,21 @@ $(document).on('submit', 'form', function (e) {
   e.preventDefault();
 });
 
-if (!(endpoint in secondaryEndpoints)) {
+if (!(secondaryEndpoints.includes(endpoint))) {
+   const searchInput = document.querySelector(".searchField");
+
+    searchInput.addEventListener("input", function () {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(function () {
+        const query = searchInput.value.trim();
+        if (query.length > 0) {
+          fetchSuggestions(query);
+        } else {
+          document.querySelector(".authorList").innerHTML = "";
+        }
+      }, 500);
+    });
+
   $(document).on("click", "#saveRecordBtn", () => {
     let fullName = $('#fullName').val();
     let lastNameInitials = $('#lastNameInitials').val();
@@ -254,6 +271,7 @@ if (!(endpoint in secondaryEndpoints)) {
       data: {"id":document.querySelector('[data-current-author-id]').getAttribute("data-current-author-id")},
       success: function (response) {
         flash("Данные успешно сохранены")
+        window.location.reload();
       },
       error: function () {
         flash("Данные не удалось сохранить")
@@ -280,6 +298,7 @@ if (!(endpoint in secondaryEndpoints)) {
         data: data,
         success: function (response) {
            $('#addPersonModal').modal('hide');
+           window.location.reload();
         },
         error: function () {
           flash("Ошибка при добавлении");
@@ -288,4 +307,71 @@ if (!(endpoint in secondaryEndpoints)) {
   });
 }
 
+$(".rescheduleBtn").on("click", function () {
+  $.ajax({
+        url: '/api/plan/update/',
+        method: 'POST',
+        data: {
+          "updateInterval": $("#updateInterval").val(),
+          "dayOfWeek": $("#dayOfWeek").val(),
+          "updateTime": $("#updateTime").val()
+        },
+        success: function (response) {
+           $('#autoUpdateModal').modal('hide');
+        },
+        error: function () {
+          flash("Ошибка при изменении расписания");
+        }
+      });
+})
 
+if (endpoint.startsWith("updates")) {
+    $.ajax({
+        url: '/views/updates_view',
+        method: 'GET',
+        success: function (response) {
+          document.querySelector(".mainView").innerHTML = response;
+        },
+        error: function () {
+          flash('Ошибка получения списка обновлений');
+        }
+      });
+
+    $('#applyFilterBtn').click(function(event){
+                event.preventDefault();
+
+                var formData = {
+                    'department_id': localStorage.getItem("departmentId"),
+                    'assigned_to_department': $('#attachedToDepartment').is(':checked'),
+                    'tags': updateTagList("updatesTagsContainer").join(","),
+                };
+
+                let datefrom = new Date($('#dateFrom').val()).getTime() / 1000;
+                let dateto = new Date($('#dateTo').val()).getTime() / 1000;
+                if (!Number.isNaN(datefrom)) {
+                    formData["dateFrom"] = datefrom;
+                }
+                if (!Number.isNaN(dateto)) {
+                    formData["dateTo"] = dateto;
+                }
+
+                $.ajax({
+                    type: 'GET',
+                    url: '/views/updates_view',
+                    data: formData,
+                    success: function(response) {
+                        $('.mainView').html(response);
+                    }
+                });
+            });
+
+    $('#resetFilterBtn').click(function(event){
+        event.preventDefault();
+
+        $('#dateFrom').val('');
+        $('#dateTo').val('');
+        $('#attachedToDepartment').prop('checked', false);
+        $('#tags').val('');
+        $('#updatesTagsContainer').empty();
+    });
+}

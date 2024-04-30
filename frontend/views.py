@@ -1,5 +1,9 @@
+from datetime import datetime, timedelta
+
 from django.db.models import Q
 from django.shortcuts import render, redirect
+from django.utils import timezone
+from django.utils import dateformat
 
 from api.models import Author, Publication, Department
 
@@ -42,6 +46,56 @@ def author_details(request):
             "departments": Department.objects.all(),
         },
     )
+
+
+def update_view(request):
+    department_id = request.GET.get("department_id")
+    datefrom = request.GET.get(
+        "datefrom",
+        datetime.now().replace(tzinfo=timezone.get_current_timezone())
+        - timedelta(days=60),
+    )
+    dateto = request.GET.get(
+        "dateto", datetime.now().replace(tzinfo=timezone.get_current_timezone())
+    )
+    if isinstance(datefrom, str):
+        datefrom = datetime.fromtimestamp(int(datefrom))
+    if isinstance(dateto, str):
+        dateto = datetime.fromtimestamp(int(dateto))
+    assigned_to_dep = request.GET.get("assigned_to_department", False)
+    if assigned_to_dep == "false":
+        assigned_to_dep = False
+    elif assigned_to_dep == "true":
+        assigned_to_dep = True
+    tags = request.GET.get("tags", "").split(",")
+    if "" in tags:
+        tags.remove("")
+    query = Q(added_date__gte=datefrom, added_date__lte=dateto)
+    if assigned_to_dep and department_id:
+        query &= Q(department__id=department_id)
+    publications = Publication.objects.filter(query)
+
+    def tag_filter(pub):
+        any_of_authors_has_tag = False
+        for author in pub.authors.all():
+            author_tags = list(map(lambda x: x.name, author.tag_set.all()))
+            if set(tags).intersection(set(author_tags)) == set(tags):
+                any_of_authors_has_tag = True
+        return any_of_authors_has_tag
+
+    publications = list(filter(tag_filter, publications))
+    groups = {}
+    for pub in publications:
+        month_tag = f"{pub.added_date.month}.{pub.added_date.year}"
+        groups.setdefault(
+            month_tag,
+            {
+                "localized_name": dateformat.format(pub.added_date, "F Y"),
+                "publications": [],
+            },
+        )
+        groups[month_tag]["publications"].append(pub)
+    return render(request, "updates_view.html", {"groups": groups.values()})
 
 
 def account_profile(request):

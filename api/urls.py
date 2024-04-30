@@ -14,6 +14,7 @@ urlpatterns = [
     path("publications/", PublicationListView.as_view()),
     path("departments/", FacultyDepartmentView.as_view()),
     path("tags/", TagListView.as_view()),
+    path("plan/update/", PlanUpdateView.as_view()),
     path("stats/", stats),
 ]
 urlpatterns += author_router.urls
