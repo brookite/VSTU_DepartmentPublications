@@ -120,7 +120,12 @@ def _autoupdate_author(author: Author, use_alias: Optional[str] = None):
         pub.save()
     for old in removed_publications:
         logger.debug(f"Удаление публикации: {old}")
-        Publication.objects.filter(text=old).delete()
+        publications = Publication.objects.filter(html_content=old)
+        for publication in publications:
+            if publication.authors.count() > 1:
+                publication.authors.remove(author)
+            else:
+                publication.delete()
 
 
 def _autoupdate_author_by_department(
@@ -170,7 +175,7 @@ def autoupdate_author(author: Author):
             f"Обновление автора {author.library_primary_name} по обозначению: {alias.alias}"
         )
         _autoupdate_author(author, alias.alias)
-        _autoupdate_author_by_department(author, alias.alias)
+        _autoupdate_author_by_department(author, author.department, alias.alias)
     author.last_updated = datetime.datetime.now().replace(
         tzinfo=timezone.get_current_timezone()
     )
