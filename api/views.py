@@ -8,7 +8,6 @@ from rest_framework.response import Response
 
 from api import settings
 from api.utils import APIResponse
-from autoupdate.strategy import calculate_next_global_update, calculate_next_update
 from core.vstulib import VSTULibrary
 from api.serializers import *
 
@@ -203,6 +202,7 @@ class TagListView(ListAPIView):
 
 @api_view(["GET"])
 def stats(request):
+    from autoupdate.strategy import calculate_next_global_update, calculate_next_update
     stats = Timestamps.objects.all()
     result_dict = {}
     for stat in stats:
