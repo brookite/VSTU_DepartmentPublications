@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.utils import dateformat
 
-from api.models import Author, Publication, Department
+from api.models import Author, Publication, Department, Tag
 
 
 def index(request):
@@ -22,11 +22,20 @@ def updates(request):
 
 def author_list(request):
     q = request.GET.get("q", "")
-    dep_id = request.GET.get("department")
+    dep_id = int(request.GET.get("department"))
+    tags = request.GET.get("tags", "").split(",")
+    if "" in tags:
+        tags.remove("")
+    filtered_tags = []
+    for tag in tags:
+        if (tagobj := Tag.objects.filter(name=tag)).exists():
+            filtered_tags.append(tagobj.first())
     query = Q(full_name__icontains=q) | Q(library_primary_name__icontains=q)
     if dep_id:
-        query &= Q(department_id=dep_id)
-    authors = Author.objects.filter(query)
+        query &= Q(department__id=dep_id)
+    if len(filtered_tags):
+        query &= Q(tag__in=filtered_tags)
+    authors = Author.objects.filter(query)[:15]
     return render(request, "people_list.html", {"authors": authors})
 
 

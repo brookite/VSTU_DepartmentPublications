@@ -104,7 +104,8 @@ function fetchSuggestions(query) {
     dataType: "html",
     data: {
       "q": query,
-      "department": localStorage.getItem("departmentId")
+      "department": localStorage.getItem("departmentId"),
+        "tags": updateTagList("searchFilterTagsContainer").join(",")
     },
     success: function (data) {
       document.querySelector(".authorList").innerHTML = "";
@@ -233,6 +234,22 @@ if (!(secondaryEndpoints.includes(endpoint))) {
           document.querySelector(".authorList").innerHTML = "";
         }
       }, 500);
+    });
+
+    $(document).on("click", "#resetFilterBtn", () => {
+        $("#tagsFilter").val("");
+        $("#searchFilterTagsContainer").empty();
+    });
+
+    $(document).on("click", ".removeTag", () => {
+        fetchSuggestions($(".searchField").val());
+    });
+
+    $(document).on('keydown', '#tagsFilter', function (e) {
+        if (e.keyCode === 13) {
+          e.preventDefault();
+          fetchSuggestions($(".searchField").val());
+        }
     });
 
   $(document).on("click", "#saveRecordBtn", () => {
