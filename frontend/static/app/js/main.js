@@ -228,11 +228,7 @@ if (!(secondaryEndpoints.includes(endpoint))) {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(function () {
         const query = searchInput.value.trim();
-        if (query.length > 0) {
-          fetchSuggestions(query);
-        } else {
-          document.querySelector(".authorList").innerHTML = "";
-        }
+        fetchSuggestions(query);
       }, 500);
     });
 

@@ -34,12 +34,15 @@ def author_list(request):
     for tag in tags:
         if (tagobj := Tag.objects.filter(name=tag)).exists():
             filtered_tags.append(tagobj.first())
-    query = Q(full_name__icontains=q) | Q(library_primary_name__icontains=q)
+    if q.strip():
+        query = Q(full_name__icontains=q) | Q(library_primary_name__icontains=q)
+    else:
+        query = Q()
     if dep_id:
         query &= Q(department__id=dep_id)
     if len(filtered_tags):
         query &= Q(tag__in=filtered_tags)
-    authors = Author.objects.filter(query)[:15]
+    authors = Author.objects.filter(query)[:100]
     return render(request, "people_list.html", {"authors": authors})
 
 
