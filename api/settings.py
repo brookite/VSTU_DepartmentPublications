@@ -79,14 +79,14 @@ class Settings:
 
         if day_of_week is not None:
             num_day_of_week = [
+                "sunday",
                 "monday",
                 "tuesday",
                 "wednesday",
                 "thursday",
                 "friday",
-                "saturday",
-                "sunday",
-            ].index(day_of_week) + 1
+                "saturday"
+            ].index(day_of_week)
         else:
             num_day_of_week = None
         every_day_month = None
