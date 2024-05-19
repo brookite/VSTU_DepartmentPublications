@@ -203,7 +203,8 @@ class TagListView(ListAPIView):
 
 @api_view(["GET"])
 def stats(request):
-    from autoupdate.strategy import calculate_next_global_update, calculate_next_update
+    from autoupdate.api import calculate_next_global_update
+    from autoupdate.api import calculate_next_update
 
     stats = Timestamps.objects.all()
     result_dict = {}

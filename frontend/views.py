@@ -7,7 +7,7 @@ from django.utils import dateformat
 
 from api.models import Author, Publication, Department, Tag
 from api.settings import Settings
-from autoupdate.strategy import calculate_next_update, calculate_next_global_update
+from autoupdate.api import calculate_next_update, calculate_next_global_update
 
 
 def index(request):
