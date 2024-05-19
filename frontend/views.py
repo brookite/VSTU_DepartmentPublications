@@ -6,18 +6,47 @@ from django.utils import timezone
 from django.utils import dateformat
 
 from api.models import Author, Publication, Department, Tag
+from api.settings import Settings
+from autoupdate.strategy import calculate_next_update, calculate_next_global_update
 
 
 def index(request):
+    settings = Settings()
+    try:
+        short_autoupdate = calculate_next_update()
+        global_autoupdate = calculate_next_global_update()
+    except Exception:
+        short_autoupdate, global_autoupdate = None, None
     return render(
         request,
         "index.html",
-        {"user": request.user, "departments": Department.objects.all()},
+        {
+            "user": request.user,
+            "departments": Department.objects.all(),
+            "short_autoupdate": short_autoupdate,
+            "global_autoupdate": global_autoupdate,
+            "reschedule_minutes": settings.reschedule_minutes,
+            "short_batch_hour": settings.short_task_batch_update_delay // 3600,
+            "short_batch_count": settings.max_short_tasks,
+        },
     )
 
 
 def updates(request):
-    return render(request, "updates.html", {"user": request.user})
+    settings = Settings()
+    try:
+        short_autoupdate = calculate_next_update()
+        global_autoupdate = calculate_next_global_update()
+    except Exception:
+        short_autoupdate, global_autoupdate = None, None
+    return render(request, "updates.html", {
+        "user": request.user,
+        "short_autoupdate": short_autoupdate,
+        "global_autoupdate": global_autoupdate,
+        "reschedule_minutes": settings.reschedule_minutes,
+        "short_batch_hour": settings.short_task_batch_update_delay // 3600,
+        "short_batch_count": settings.max_short_tasks,
+    })
 
 
 def author_list(request):

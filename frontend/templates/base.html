@@ -110,11 +110,31 @@
           <div class="modal-body">
             <form>
                 <div class="mb-3">
-                    <small>Сохраненное расписание на данный момент не показывается ниже</small>
+                    <small>
+                        <i>Для отображения изменений в расписании не забудьте обновить страницу</i>
+                    <br>
+                    <b>Дата следующего обновления: </b> <span> {{ short_autoupdate }}</span>
+                    <br>
+                    <b>Дата следующего глобального обновления: </b><span>{{ global_autoupdate }}</span>
+                    <br>
+                    Обратите внимание, что расписание автообновления применится в течение {{ reschedule_minutes }} минут после ручного изменения
+                    <br>
+                    Сохраненное расписание на данный момент не показывается ниже
+                    </small>
                 </div>
+                <div class="mb-3">
+                    <i class="ri-questionnaire-fill"></i>
+                    <small>
+                        Система использует две модели автообновления - короткая и глобальная.
+                    <br>
+                        Короткая модель запускается раз в {{ short_batch_hour }} часов и обновляет не более {{ short_batch_count }} новых добавленных авторов
+                    <br>
+                        Глобальная модель запускается по расписанию, задаваемому выше, и обновляет всех авторов на всех кафедрах
+                    </small>
+                    </div>
               <div class="mb-3">
                 <label for="updateInterval" class="form-label"
-                  >Интервал обновления</label
+                  >Интервал глобального автообновления</label
                 >
                 <select class="form-select" name="updateInterval" id="updateInterval">
                   <option value="daily" selected>Раз в день</option>
@@ -140,7 +160,7 @@
               </div>
               <div class="mb-3">
                 <label for="updateTime" class="form-label"
-                  >Время обновления</label
+                  >Время глобального обновления</label
                 >
                 <input type="time" value="03:00" class="form-control" name="updateTime" id="updateTime" />
               </div>
