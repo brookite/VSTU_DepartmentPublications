@@ -31,6 +31,8 @@ DEBUG = True
 
 if DEBUG:
     load_dotenv("./dev.env")
+else:
+    load_dotenv("./prod.env")
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
 
