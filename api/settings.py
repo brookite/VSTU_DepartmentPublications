@@ -100,7 +100,7 @@ class Settings:
             every_day_month = count
         elif interval == "month":
             every_day_month = count
-        hour, minute = at_time // 3600, at_time % 3600
+        hour, minute = at_time // 3600, at_time % 3600 // 60
         if every_day_month:
             if num_day_of_week:
                 cron = f"{minute} {hour} */{every_day_month} * {num_day_of_week}"
