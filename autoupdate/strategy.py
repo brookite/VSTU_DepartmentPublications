@@ -1,8 +1,5 @@
-import datetime
 import time
 from typing import Optional
-
-from django.utils import timezone
 
 from api.models import *
 from autoupdate.api import *
