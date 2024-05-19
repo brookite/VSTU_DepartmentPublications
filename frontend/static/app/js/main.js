@@ -193,6 +193,35 @@ $(document).on('input', '.tagsAddField',function () {
       });
 });
 
+let debounceTimeout;
+
+$(document).on('input', '#addLastNameInitials', function () {
+    clearTimeout(debounceTimeout);
+
+    let query = $(this).val().trim();
+
+    debounceTimeout = setTimeout(function () {
+        if (query) {
+            $.ajax({
+                url: '/api/authorSuggestions',
+                method: 'GET',
+                data: { q: query },
+                success: function (response) {
+                    var datalist = $('#authorList');
+                    datalist.empty();
+                    response.forEach(function (tag) {
+                        datalist.append('<option value="' + tag + '">');
+                    });
+                },
+                error: function () {
+                    flash('Ошибка получения подсказок');
+                }
+            });
+        }
+    }, 300);
+});
+
+
 $(document).on('keydown', '.tagsAddField', function (e) {
     if (e.keyCode === 13) {
       e.preventDefault();
