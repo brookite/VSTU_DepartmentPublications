@@ -84,9 +84,15 @@ WSGI_APPLICATION = "departmentpublications.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+DB_ENGINES = {
+    "mysql": "django.db.backends.mysql",
+    "postgresql": "django.db.backends.postgresql",
+    "mariadb": "django.db.backends.mysql"
+}
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": DB_ENGINES[os.getenv("DB_ENGINE", "postgresql")],
         "NAME": "DepartmentPublications",
         "USER": os.getenv("DB_USER"),
         "PASSWORD": os.getenv("DB_PASSWORD"),
