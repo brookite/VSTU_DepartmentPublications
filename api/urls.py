@@ -7,6 +7,8 @@ author_router = DefaultRouter()
 author_router.register(r"authors", AuthorViewSet, basename="author")
 settings_router = DefaultRouter()
 settings_router.register(r"settings", SettingsViewSet, basename="settings")
+plan_router = DefaultRouter()
+plan_router.register(r"plan", PlanViewSet, basename="plan")
 
 urlpatterns = [
     path("auth/", include("rest_framework.urls")),
@@ -14,8 +16,8 @@ urlpatterns = [
     path("publications/", PublicationListView.as_view()),
     path("departments/", FacultyDepartmentView.as_view()),
     path("tags/", TagListView.as_view()),
-    path("plan/update/", PlanUpdateView.as_view()),
     path("stats/", stats),
 ]
 urlpatterns += author_router.urls
 urlpatterns += settings_router.urls
+urlpatterns += plan_router.urls

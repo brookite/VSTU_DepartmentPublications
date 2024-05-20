@@ -219,8 +219,9 @@ def stats(request):
     return APIResponse(result_dict)
 
 
-class PlanUpdateView(APIView):
-    def post(self, request):
+class PlanViewSet(viewsets.ViewSet):
+    @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
+    def update_plan(self, request):
         update_interval = request.data["updateInterval"]
         day_of_week = request.data["dayOfWeek"]
         update_time = request.data["updateTime"].split(":")
@@ -243,3 +244,10 @@ class PlanUpdateView(APIView):
         settingsobj = settings.Settings()
         settingsobj.plan_autoupdate(interval, count, day_of_week, update_time)
         return APIResponse(status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
+    def reset_short(self, request):
+        timestamps = settings.Timestamps()
+        params = settings.Settings()
+        result = timestamps.clear_short_updates()
+        return APIResponse(data={"result": result, "update_interval": params.short_tasks_check_interval}, status=status.HTTP_200_OK)

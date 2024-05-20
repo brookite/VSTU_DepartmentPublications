@@ -14,7 +14,8 @@ class Settings:
             {"param_name": "max_short_tasks", "param_value": 15},
             {"param_name": "short_tasks_check_interval", "param_value": 300},
             {"param_name": "cron_schedule", "param_value": "0 2 * * 5"},
-            {"param_name": "reschedule_minutes", "param_value": 5}
+            {"param_name": "reschedule_minutes", "param_value": 5},
+            {"param_name": "short_batch_reset_timeout", "param_value": 3600}
         ]
 
         for default in defaults:
@@ -54,6 +55,10 @@ class Settings:
     @property
     def max_short_tasks(self):
         return int(SettingsModel.objects.get(param_name="max_short_tasks").param_value)
+
+    @property
+    def short_batch_reset_timeout(self):
+        return int(SettingsModel.objects.get(param_name="short_batch_reset_timeout").param_value)
 
     @property
     def cron_schedule(self):
@@ -133,6 +138,8 @@ class Settings:
 
 
 class Timestamps:
+    _last_update_request = None
+
     def __init__(self):
         defaults = [
             {
@@ -143,7 +150,9 @@ class Timestamps:
             },
             {
                 "param_name": "last_short_tasks_batch",
-                "timestamp": datetime.datetime.fromtimestamp(0),
+                "timestamp": datetime.datetime.fromtimestamp(0).replace(
+                    tzinfo=timezone.get_current_timezone()
+                ),
             },
         ]
 
@@ -180,3 +189,20 @@ class Timestamps:
             tzinfo=timezone.get_current_timezone()
         )
         update_field.save()
+
+    def clear_short_updates(self):
+        s = Settings()
+        now = datetime.datetime.now().replace(
+            tzinfo=timezone.get_current_timezone()
+        )
+        if (Timestamps._last_update_request and
+                (now - Timestamps._last_update_request).total_seconds() <= s.short_batch_reset_timeout):
+            return False
+        data = TimestampsModel.objects.get(param_name="last_short_tasks_batch")
+        data.timestamp = datetime.datetime.fromtimestamp(0).replace(
+            tzinfo=timezone.get_current_timezone()
+        )
+        data.save()
+        Timestamps._last_update_request = now
+        return True
+

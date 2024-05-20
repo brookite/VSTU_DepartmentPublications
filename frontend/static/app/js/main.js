@@ -351,7 +351,7 @@ if (!(secondaryEndpoints.includes(endpoint))) {
 
 $(".rescheduleBtn").on("click", function () {
   $.ajax({
-        url: '/api/plan/update/',
+        url: '/api/plan/update_plan/',
         method: 'POST',
         data: {
           "updateInterval": $("#updateInterval").val(),
@@ -360,6 +360,29 @@ $(".rescheduleBtn").on("click", function () {
         },
         success: function (response) {
            $('#autoUpdateModal').modal('hide');
+        },
+        error: function () {
+          flash("Ошибка при изменении расписания");
+        }
+      });
+})
+
+$(".updateRequestBtn").on("click", function () {
+  $.ajax({
+        url: '/api/plan/reset_short',
+        method: 'GET',
+        success: function (response) {
+            let minutes = Math.floor(response["items"]["update_interval"] / 60);
+           if (response["items"] != undefined) {
+               if (response["items"]["result"]) {
+                   flash(`Обновление успешно запрошено. Оно будет выполнено в течение ${minutes} минут`);
+               } else {
+                   flash("Обновление нельзя запросить на данный момент. Попробуйте позже");
+               }
+
+           } else {
+               flash("Ошибка при запросе обновления")
+           }
         },
         error: function () {
           flash("Ошибка при изменении расписания");
