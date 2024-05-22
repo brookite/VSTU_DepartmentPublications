@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from rest_framework import viewsets, status
@@ -11,6 +12,10 @@ from api.utils import APIResponse
 from core.vstulib import VSTULibrary
 from api.serializers import *
 
+from autoupdate.api import calculate_next_global_update
+from autoupdate.api import calculate_next_update
+
+logger = logging.getLogger("api")
 
 class AuthorSuggestions(APIView):
     serializer_class = QuerySerializer
@@ -66,6 +71,7 @@ class AuthorViewSet(viewsets.ViewSet):
         id = request.data.get("id", "")
         if id:
             author = Author.objects.get(id=int(id))
+            logger.debug(f"Удален автор: {author.full_name}")
             author.delete()
         return APIResponse(status=status.HTTP_200_OK)
 
@@ -203,9 +209,6 @@ class TagListView(ListAPIView):
 
 @api_view(["GET"])
 def stats(request):
-    from autoupdate.api import calculate_next_global_update
-    from autoupdate.api import calculate_next_update
-
     stats = Timestamps.objects.all()
     result_dict = {}
     for stat in stats:
@@ -242,6 +245,7 @@ class PlanViewSet(viewsets.ViewSet):
             )
 
         settingsobj = settings.Settings()
+        logger.info(f"Запрос на смену плана автообновления с параметрами: {interval}, {count}, {day_of_week}, {update_time}")
         settingsobj.plan_autoupdate(interval, count, day_of_week, update_time)
         return APIResponse(status=status.HTTP_200_OK)
 

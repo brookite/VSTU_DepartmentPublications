@@ -1,11 +1,12 @@
-import datetime
+import json
+import logging
 
 from api.models import Settings as SettingsModel, Author
 from api.models import Timestamps as TimestampsModel
-from django.utils import timezone
 
 from utils.datetimeutils import now_datetime, from_timestamp
 
+logger = logging.getLogger("api")
 
 class Settings:
     def __init__(self):
@@ -115,6 +116,18 @@ class Settings:
         elif interval == "month":
             every_month = count
         hour, minute = at_time // 3600, at_time % 3600 // 60
+
+        trace = {
+            "every_day_month": every_day_month,
+            "every_month": every_month,
+            "interval": interval,
+            "every_day_week": every_day_week,
+            "day_of_week": day_of_week,
+            "hour": hour,
+            "minute": minute
+        }
+        logger.debug("Планирование с параметрами: {}".format(json.dumps(trace)))
+
         if every_day_month:
             if num_day_of_week:
                 if every_day_month == 1:
@@ -189,7 +202,9 @@ class Timestamps:
         now = now_datetime()
         if (Timestamps._last_update_request and
                 (now - Timestamps._last_update_request).total_seconds() <= s.short_batch_reset_timeout):
+            logger.debug("В коротком обновлении отказано")
             return False
+        logger.info("Запрошено короткое обновление")
         data = TimestampsModel.objects.get(param_name="last_short_tasks_batch")
         data.timestamp = from_timestamp(0)
         data.save()

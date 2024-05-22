@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 import os
 import logging
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -151,6 +152,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGS_DIR = BASE_DIR / "logs"
 os.makedirs(LOGS_DIR, exist_ok=True)
 
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -160,26 +162,25 @@ LOGGING = {
     "handlers": {
         "file": {
             "level": "INFO",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "when": "midnight",
-            "interval": 1,
-            "backupCount": 30,
+            "class": "logging.handlers.RotatingFileHandler",
+            "maxBytes": 10 * 1024 * 1024,
+            "backupCount": 5,
             "encoding": "utf-8",
             "filename": LOGS_DIR / "departmentpub.log",
             "formatter": "standard",
         },
         "autoupdate_file": {
             "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "when": "midnight",
-            "interval": 1,
-            "backupCount": 30,
+            "class": "logging.handlers.RotatingFileHandler",
+            "maxBytes": 10 * 1024 * 1024,
+            "backupCount": 5,
             "encoding": "utf-8",
             "filename": LOGS_DIR / "autoupdate.log",
             "formatter": "standard",
         },
         "console": {
             "level": "DEBUG",
+            "encoding": "utf-8",
             "class": "logging.StreamHandler",
             "formatter": "standard",
         },
@@ -209,6 +210,19 @@ LOGGING = {
             "handlers": ["console", "file"],
             "level": os.getenv("DJANGO_LOG_LEVEL", "WARNING"),
             "propagate": False,
-        },
+        }
     },
+    "root": {
+        "handlers": ["console", "file"],
+        "level": "ERROR",
+    }
 }
+
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        return
+    logging.getLogger("exceptions").error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+
+
+sys.excepthook = handle_exception
