@@ -4,6 +4,8 @@ from api.models import Settings as SettingsModel, Author
 from api.models import Timestamps as TimestampsModel
 from django.utils import timezone
 
+from utils.datetimeutils import now_datetime, from_timestamp
+
 
 class Settings:
     def __init__(self):
@@ -144,15 +146,11 @@ class Timestamps:
         defaults = [
             {
                 "param_name": "last_global_update",
-                "timestamp": datetime.datetime.now().replace(
-                    tzinfo=timezone.get_current_timezone()
-                ),
+                "timestamp": now_datetime(),
             },
             {
                 "param_name": "last_short_tasks_batch",
-                "timestamp": datetime.datetime.fromtimestamp(0).replace(
-                    tzinfo=timezone.get_current_timezone()
-                ),
+                "timestamp": from_timestamp(0),
             },
         ]
 
@@ -178,30 +176,22 @@ class Timestamps:
 
     def register_global_update(self):
         update_field = TimestampsModel.objects.get(param_name="last_global_update")
-        update_field.timestamp = datetime.datetime.now().replace(
-            tzinfo=timezone.get_current_timezone()
-        )
+        update_field.timestamp = now_datetime()
         update_field.save()
 
     def register_short_update(self):
         update_field = TimestampsModel.objects.get(param_name="last_short_tasks_batch")
-        update_field.timestamp = datetime.datetime.now().replace(
-            tzinfo=timezone.get_current_timezone()
-        )
+        update_field.timestamp = now_datetime()
         update_field.save()
 
     def clear_short_updates(self):
         s = Settings()
-        now = datetime.datetime.now().replace(
-            tzinfo=timezone.get_current_timezone()
-        )
+        now = now_datetime()
         if (Timestamps._last_update_request and
                 (now - Timestamps._last_update_request).total_seconds() <= s.short_batch_reset_timeout):
             return False
         data = TimestampsModel.objects.get(param_name="last_short_tasks_batch")
-        data.timestamp = datetime.datetime.fromtimestamp(0).replace(
-            tzinfo=timezone.get_current_timezone()
-        )
+        data.timestamp = from_timestamp(0)
         data.save()
         Timestamps._last_update_request = now
         return True

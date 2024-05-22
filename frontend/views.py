@@ -8,6 +8,7 @@ from django.utils import dateformat
 from api.models import Author, Publication, Department, Tag
 from api.settings import Settings
 from autoupdate.api import calculate_next_update, calculate_next_global_update
+from utils.datetimeutils import now_datetime
 
 
 def index(request):
@@ -97,11 +98,10 @@ def update_view(request):
     department_id = request.GET.get("department_id")
     datefrom = request.GET.get(
         "datefrom",
-        datetime.now().replace(tzinfo=timezone.get_current_timezone())
-        - timedelta(days=60),
+        now_datetime() - timedelta(days=60),
     )
     dateto = request.GET.get(
-        "dateto", datetime.now().replace(tzinfo=timezone.get_current_timezone())
+        "dateto", now_datetime()
     )
     if isinstance(datefrom, str):
         datefrom = datetime.fromtimestamp(int(datefrom))

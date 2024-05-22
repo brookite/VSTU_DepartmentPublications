@@ -116,9 +116,7 @@ def autoupdate_author(author: Author):
         )
         _autoupdate_author(author, alias.alias)
         _autoupdate_author_by_department(author, author.department, alias.alias)
-    author.last_updated = datetime.datetime.now().replace(
-        tzinfo=timezone.get_current_timezone()
-    )
+    author.last_updated = now_datetime()
     author.save()
 
 
@@ -133,7 +131,7 @@ def short_task_batch():
         abs(
             delta_seconds(
                 global_update_time,
-                datetime.datetime.now().replace(tzinfo=timezone.get_current_timezone()),
+                now_datetime()
             )
         )
         < SETTINGS.obsolescence_time_seconds
@@ -142,9 +140,7 @@ def short_task_batch():
             f"{global_update_time} будет/было глобальное автообновление, не выполняю одиночные задачи"
         )
         return
-    if datetime.datetime.now().replace(
-        tzinfo=timezone.get_current_timezone()
-    ) <= last_update + datetime.timedelta(
+    if now_datetime() <= last_update + datetime.timedelta(
         seconds=SETTINGS.short_task_batch_update_delay
     ):
         logger.debug(
@@ -176,7 +172,7 @@ def global_autoupdate(skip_university_update=False):
         if (
             author.last_updated
             and delta_seconds(
-                datetime.datetime.now().replace(tzinfo=timezone.get_current_timezone()),
+                now_datetime(),
                 author.last_updated,
             )
             < obsolescence_time
