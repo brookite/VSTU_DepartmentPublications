@@ -1,13 +1,20 @@
+import json
+import os
+import tempfile
+import zipfile
 from datetime import datetime, timedelta
 
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
-from django.utils import timezone
 from django.utils import dateformat
 
+from api import models
 from api.models import Author, Publication, Department, Tag
 from api.settings import Settings
 from autoupdate.api import calculate_next_update, calculate_next_global_update
+from departmentpublications import settings
 from utils.datetimeutils import now_datetime
 
 
@@ -145,3 +152,48 @@ def update_view(request):
 
 def account_profile(request):
     return redirect("/", permanent=True)
+
+
+@login_required
+def dump_logs(request):
+    def datetime_converter(o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+        raise TypeError(f"Type {type(o)} not serializable")
+
+    stats_data = {"settings": {}, "stats": {}}
+    for param in models.Settings.objects.all():
+        stats_data["settings"][param.param_name] = param.param_value
+    for stat in models.Timestamps.objects.all():
+        stats_data["stats"][stat.param_name] = stat.timestamp
+
+    logs_dir = os.path.join(settings.BASE_DIR, 'logs')
+    if not os.path.exists(logs_dir):
+        return HttpResponse("Logs directory does not exist", status=404)
+
+    with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as tmp_file:
+        archive_path = tmp_file.name
+
+    try:
+        with zipfile.ZipFile(archive_path, 'w') as archive:
+            for foldername, subfolders, filenames in os.walk(logs_dir):
+                for filename in filenames:
+                    file_path = os.path.join(foldername, filename)
+                    archive.write(file_path, os.path.relpath(file_path, logs_dir))
+
+            stats_json_path = os.path.join(tempfile.gettempdir(), 'stats.json')
+            with open(stats_json_path, 'w') as stats_file:
+                json.dump(stats_data, stats_file, default=datetime_converter, indent=4)
+
+            archive.write(stats_json_path, 'stats.json')
+
+        with open(archive_path, 'rb') as archive_file:
+            response = HttpResponse(archive_file.read(), content_type='application/zip')
+            response['Content-Disposition'] = f'attachment; filename=logs_archive.zip'
+            return response
+
+    finally:
+        if os.path.exists(archive_path):
+            os.remove(archive_path)
+        if os.path.exists(stats_json_path):
+            os.remove(stats_json_path)
