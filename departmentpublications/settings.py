@@ -180,7 +180,6 @@ LOGGING = {
         },
         "console": {
             "level": "DEBUG",
-            "encoding": "utf-8",
             "class": "logging.StreamHandler",
             "formatter": "standard",
         },
