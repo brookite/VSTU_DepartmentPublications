@@ -4,16 +4,21 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from autoupdate.strategy import *
 
+global_autoupdate_job = None
 
 def schedule_observer(job):
     logger.debug("Проверка изменения расписания")
-    job.reschedule(CronTrigger.from_crontab(SETTINGS.cron_schedule))
-    logger.debug("Расписание было изменено")
+    global global_autoupdate_job
+    if global_autoupdate_job:
+        global_autoupdate_job = global_autoupdate_job.reschedule(CronTrigger.from_crontab(SETTINGS.cron_schedule))
+        logger.debug("Расписание было изменено")
+
 
 def run():
     logger.info("Запускаю планировщик задач автообновления...")
     scheduler = BlockingScheduler()
-    global_autoupdate_id = scheduler.add_job(
+    global global_autoupdate_job
+    global_autoupdate_job = scheduler.add_job(
         global_autoupdate, CronTrigger.from_crontab(SETTINGS.cron_schedule)
     )
     scheduler.add_job(
