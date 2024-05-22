@@ -209,11 +209,12 @@ LOGGING = {
             "handlers": ["console", "file"],
             "level": os.getenv("DJANGO_LOG_LEVEL", "WARNING"),
             "propagate": False,
-        }
-    },
-    "root": {
-        "handlers": ["console", "file"],
-        "level": "ERROR",
+        },
+        "exceptions": {
+            "handlers": ["file", "console"],
+            "level": "WARNING",
+            "propagate": True,
+        },
     }
 }
 

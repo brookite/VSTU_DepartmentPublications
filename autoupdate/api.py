@@ -1,6 +1,7 @@
 import datetime
 import logging
 
+from apscheduler.triggers.cron import CronTrigger
 from croniter import croniter
 from django.utils import timezone
 
@@ -41,10 +42,7 @@ def calculate_next_update():
 
 
 def calculate_next_global_update():
-    return croniter(
-        SETTINGS.cron_schedule,
-        now_datetime(),
-    ).get_next(datetime.datetime)
+    return CronTrigger.from_crontab(SETTINGS.cron_schedule).get_next_fire_time(None, now_datetime())
 
 
 def schedule_short_task(author: Author):

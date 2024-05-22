@@ -10,7 +10,4 @@ from autoupdate.strategy import *
 
 
 def run():
-    try:
-        global_autoupdate(skip_university_update=True)
-    except:
-        logger.error("Exception", exc_info=True)
+    print(CronTrigger.from_crontab("0 14 * * 0").get_next_fire_time(None, now_datetime()))
