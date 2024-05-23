@@ -6,5 +6,4 @@ BeautifulSoup4
 python-dotenv
 psycopg[binary]
 django-extensions
-croniter
 apscheduler
