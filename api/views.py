@@ -250,8 +250,8 @@ class PlanViewSet(viewsets.ViewSet):
         return APIResponse(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
-    def reset_short(self, request):
+    def request_update(self, request):
         timestamps = settings.Timestamps()
         params = settings.Settings()
-        result = timestamps.clear_short_updates()
-        return APIResponse(data={"result": result, "update_interval": params.short_tasks_check_interval}, status=status.HTTP_200_OK)
+        result = timestamps.request_global_update()
+        return APIResponse(data={"result": result, "update_interval": params.reschedule_minutes * 60}, status=status.HTTP_200_OK)

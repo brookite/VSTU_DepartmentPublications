@@ -165,6 +165,10 @@ class Timestamps:
                 "param_name": "last_short_tasks_batch",
                 "timestamp": from_timestamp(0),
             },
+            {
+                "param_name": "last_global_update_request",
+                "timestamp": from_timestamp(0),
+            }
         ]
 
         for default in defaults:
@@ -187,6 +191,10 @@ class Timestamps:
     def last_global_update(self):
         return TimestampsModel.objects.get(param_name="last_global_update").timestamp
 
+    @property
+    def last_global_update_request(self):
+        return TimestampsModel.objects.get(param_name="last_global_update_request").timestamp
+
     def register_global_update(self):
         update_field = TimestampsModel.objects.get(param_name="last_global_update")
         update_field.timestamp = now_datetime()
@@ -197,10 +205,23 @@ class Timestamps:
         update_field.timestamp = now_datetime()
         update_field.save()
 
+    def request_global_update(self):
+        s = Settings()
+        now = now_datetime()
+        if (self.last_global_update_request and
+                (now - self.last_global_update_request).total_seconds() < s.short_batch_reset_timeout):
+            logger.debug("В глобальном обновлении отказано")
+            return False
+        param = TimestampsModel.objects.get(param_name="last_global_update_request")
+        param.timestamp = now
+        param.save()
+        return True
+
+
     def clear_short_updates(self):
         s = Settings()
         now = now_datetime()
-        if (Timestamps._last_update_request and
+        if (Timestamps.las and
                 (now - Timestamps._last_update_request).total_seconds() <= s.short_batch_reset_timeout):
             logger.debug("В коротком обновлении отказано")
             return False

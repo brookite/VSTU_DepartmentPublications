@@ -2,8 +2,6 @@ import datetime
 import logging
 
 from apscheduler.triggers.cron import CronTrigger
-from croniter import croniter
-from django.utils import timezone
 
 from api.models import ShortUpdateTasks, Author
 from api.settings import Settings as SettingsHighLevel, Timestamps as TimestampsHighLevel

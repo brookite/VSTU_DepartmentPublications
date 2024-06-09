@@ -369,7 +369,7 @@ $(".rescheduleBtn").on("click", function () {
 
 $(".updateRequestBtn").on("click", function () {
   $.ajax({
-        url: '/api/plan/reset_short',
+        url: '/api/plan/request_update',
         method: 'GET',
         success: function (response) {
             let minutes = Math.floor(response["items"]["update_interval"] / 60);
