@@ -142,12 +142,13 @@ def update_view(request):
         groups.setdefault(
             month_tag,
             {
+                "month_firstday": datetime(pub.added_date.year, pub.added_date.month, 1),
                 "localized_name": dateformat.format(pub.added_date, "F Y"),
                 "publications": [],
             },
         )
         groups[month_tag]["publications"].append(pub)
-    return render(request, "updates_view.html", {"groups": groups.values()})
+    return render(request, "updates_view.html", {"groups": sorted(groups.values(), key=lambda x: x["month_firstday"], reverse=True)})
 
 
 def account_profile(request):
