@@ -64,9 +64,7 @@ def author_list(request):
         dep_id = int(dep_id)
     else:
         dep_id = None
-    tags = request.GET.get("tags", "").split(",")
-    if "" in tags:
-        tags.remove("")
+    tags = request.GET.getlist("tags")
     filtered_tags = []
     for tag in tags:
         if (tagobj := Tag.objects.filter(name=tag)).exists():
@@ -119,9 +117,7 @@ def update_view(request):
         assigned_to_dep = False
     elif assigned_to_dep == "true":
         assigned_to_dep = True
-    tags = request.GET.get("tags", "").split(",")
-    if "" in tags:
-        tags.remove("")
+    tags = request.GET.getlist("tags")
     query = Q(added_date__gte=datefrom, added_date__lte=dateto)
     if assigned_to_dep and department_id:
         query &= Q(department__id=department_id)

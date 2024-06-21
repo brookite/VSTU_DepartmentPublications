@@ -102,10 +102,11 @@ function fetchSuggestions(query) {
     url: "/views/author_list",
     type: "GET",
     dataType: "html",
+      traditional : true,
     data: {
       "q": query,
       "department": localStorage.getItem("departmentId"),
-        "tags": updateTagList("searchFilterTagsContainer").join(",")
+        "tags": updateTagList("searchFilterTagsContainer")
     },
     success: function (data) {
       document.querySelector(".authorList").innerHTML = "";
@@ -289,13 +290,13 @@ if (!(secondaryEndpoints.includes(endpoint))) {
       full_name: fullName,
       library_name: lastNameInitials,
       department_id: department,
-      tags: tags.join(","),
-      aliases: nameAliases.join(",")
+      tags: tags,
+      aliases: nameAliases
     };
 
     $.ajax({
       url: '/api/authors/change/',
-      method: 'POST',
+      method: 'POST', traditional : true,
       data: data,
       success: function (response) {
         flash("Данные успешно сохранены")
@@ -331,13 +332,14 @@ if (!(secondaryEndpoints.includes(endpoint))) {
         full_name: fullName,
         library_primary_name: lastNameInitials,
         department_id: department,
-        tags_list: tags.join(",")
+        tags_list: tags
       };
 
       $.ajax({
         url: '/api/authors/add/',
         method: 'POST',
         data: data,
+          traditional : true,
         success: function (response) {
            $('#addPersonModal').modal('hide');
            window.location.reload();
@@ -375,9 +377,10 @@ $(".subscribeEmail").on("click", function () {
     $.ajax({
         url: '/api/subscribeEmail',
         method: 'POST',
+        traditional : true,
         data: {
             "email": email_value,
-            "tags": updateTagList("emailTagsContainer").join(",")
+            "tags": updateTagList("emailTagsContainer")
         },
         success: function (response) {
             if (response["items"] != undefined) {
@@ -442,7 +445,7 @@ if (endpoint.startsWith("updates")) {
                 var formData = {
                     'department_id': localStorage.getItem("departmentId"),
                     'assigned_to_department': $('#attachedToDepartment').is(':checked'),
-                    'tags': updateTagList("updatesTagsContainer").join(","),
+                    'tags': updateTagList("updatesTagsContainer"),
                 };
 
                 let datefrom = new Date($('#dateFrom').val()).getTime() / 1000;
@@ -458,6 +461,8 @@ if (endpoint.startsWith("updates")) {
                     type: 'GET',
                     url: '/views/updates_view',
                     data: formData,
+                    dataType: "html",
+                    traditional : true,
                     success: function(response) {
                         $('.mainView').html(response);
                     }

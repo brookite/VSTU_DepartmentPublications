@@ -18,6 +18,7 @@ from autoupdate.api import calculate_next_update
 
 logger = logging.getLogger("api")
 
+
 class AuthorSuggestions(APIView):
     serializer_class = QuerySerializer
 
@@ -41,9 +42,7 @@ class AuthorViewSet(viewsets.ViewSet):
     serializer_class = AuthorSerializer
 
     def list(self, request):
-        authors = request.query_params.get("authors", "").split(",")
-        if "" in authors:
-            authors.remove("")
+        authors = request.query_params.getlist("authors")
         authors = list(map(int, authors))
         queryset = Author.objects.filter(id__in=authors)
         serializer = self.serializer_class(queryset, many=True)
@@ -79,8 +78,8 @@ class AuthorViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
     def change(self, request):
         id = request.data.get("id", "")
-        aliases = request.data.get("aliases", "").split(",")
-        tags = request.data.get("tags", "").split(",")
+        aliases = request.data.getlist("aliases")
+        tags = request.data.getlist("tags")
         if "" in aliases:
             aliases.remove("")
         if "" in tags:
@@ -226,7 +225,7 @@ def stats(request):
 @login_required
 def subscribe_email_toggle(request):
     email = request.POST.get("email")
-    tags = request.POST.get("tags").split(",")
+    tags = request.POST.getlist("tags")
     tags = list(map(lambda x: Tag.objects.get_or_create(name=x)[0], tags))
     object, created = EmailSubscriber.objects.get_or_create(email=email)
     subscribe_status = True
