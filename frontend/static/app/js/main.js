@@ -367,6 +367,40 @@ $(".rescheduleBtn").on("click", function () {
       });
 })
 
+$(".subscribeEmail").on("click", function () {
+    let email_value = $("#email").val().trim();
+    if (email_value.length === 0) {
+        return;
+    }
+    $.ajax({
+        url: '/api/subscribeEmail',
+        method: 'POST',
+        data: {
+            "email": email_value,
+            "tags": updateTagList("emailTagsContainer").join(",")
+        },
+        success: function (response) {
+            if (response["items"] != undefined) {
+               if (response["items"]["changed"]) {
+                   if (response["items"]["subscribe_status"]) {
+                       flash("Вы успешно подписаны на рассылку по электронной почте");
+                   } else {
+                       flash("Вы отписались от рассылки обновлений по электронной почте");
+                   }
+               } else {
+                   flash("Не удалось изменить состояние подписки на рассылку по электронной почте");
+               }
+           } else {
+               flash("Ошибка при получении информации о подписке")
+           }
+        },
+        error: function () {
+          flash("Ошибка при получении информации о подписке");
+        }
+      });
+
+});
+
 $(".updateRequestBtn").on("click", function () {
   $.ajax({
         url: '/api/plan/request_update',
@@ -440,3 +474,4 @@ if (endpoint.startsWith("updates")) {
         $('#updatesTagsContainer').empty();
     });
 }
+

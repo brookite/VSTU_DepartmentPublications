@@ -23,3 +23,11 @@ footer {
 .removeTag {
     cursor: pointer;
 }
+
+#subscribeModalButton {
+    min-width: 240px;
+}
+
+.navigatorCombobox {
+    max-width: 600px;
+}

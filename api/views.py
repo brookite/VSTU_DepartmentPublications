@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+from django.contrib.auth.decorators import login_required
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.generics import ListAPIView
@@ -220,6 +221,23 @@ def stats(request):
     result_dict["next_global_update"] = int(calculate_next_global_update().timestamp())
     result_dict["next_update"] = int(calculate_next_update().timestamp())
     return APIResponse(result_dict)
+
+@api_view(["POST"])
+@login_required
+def subscribe_email_toggle(request):
+    email = request.POST.get("email")
+    tags = request.POST.get("tags").split(",")
+    tags = list(map(lambda x: Tag.objects.get_or_create(name=x)[0], tags))
+    object, created = EmailSubscriber.objects.get_or_create(email=email)
+    subscribe_status = True
+    if not created or object.tags == tags:
+        object.delete()
+        subscribe_status = False
+    else:
+        object.tags.clear()
+        for tag in tags:
+            object.tags.add(tag)
+    return APIResponse({"changed": True, "subscribe_status": subscribe_status})
 
 
 class PlanViewSet(viewsets.ViewSet):

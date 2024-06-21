@@ -17,6 +17,7 @@ urlpatterns = [
     path("departments/", FacultyDepartmentView.as_view()),
     path("tags/", TagListView.as_view()),
     path("stats/", stats),
+    path("subscribeEmail", subscribe_email_toggle),
 ]
 urlpatterns += author_router.urls
 urlpatterns += settings_router.urls

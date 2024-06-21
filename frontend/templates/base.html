@@ -35,16 +35,17 @@
         </button>
         <div class="collapse navbar-collapse justify-content-end" id="mainNav">
           <a class="link-light me-2" href="/updates">Обновления</a>
-          <button
+        {% if user.is_authenticated %}
+          <button id="subscribeModalButton"
             class="btn btn-outline-light me-2 mb-1"
             type="submit"
             data-bs-toggle="modal"
             data-bs-target="#subscribeModal"
-            style="display: none"
           >
             Подписаться на публикации
           </button>
-          <form class="d-flex">
+        {% endif %}
+          <form class="d-flex navigatorCombobox">
             <select
               class="form-select me-2 mb-1 facultySelect"
               aria-label="Выбор университета"
@@ -180,6 +181,7 @@
       </div>
     </div>
 
+    {% if user.is_authenticated %}
     <div
       class="modal fade"
       id="subscribeModal"
@@ -201,15 +203,15 @@
             ></button>
           </div>
           <div class="modal-body">
-            <div>
+            <div style="display: none">
               <h5><i class="ri-telegram-fill"></i> Telegram</h5>
               <p>
                 Вы можете подписаться на получение публикаций с помощью нашего
                 Telegram-бота.
               </p>
               <a class="btn btn-primary" href="#">Перейти</a>
+                <hr />
             </div>
-            <hr />
             <div>
               <h5><i class="ri-mail-send-line"></i> Электронная почта</h5>
               <form>
@@ -228,17 +230,32 @@
                     Мы будем отправлять вам обновления на указанный адрес
                     электронной почты.
                   </div>
+                    <div class="mb-3">
+                      <label for="tags" class="form-label">Теги</label>
+                      <input
+                        type="text"
+                        class="form-control form-control-sm tagsAddField"
+                        id="tagsFilter"
+                        list="tagsList"
+                        data-for="emailTagsContainer"
+                        placeholder="Добавьте теги, разделяя их нажатием Enter"
+                      />
+                        <div id="emailTagsContainer" class="tagsContainer mb-3">
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-success">
+                <button type="submit" class="btn btn-success subscribeEmail">
                   Подписаться
                 </button>
+                <div id="emailHelp" class="form-text">
+                    Если вы ранее уже подписали эту электронную почту на рассылку, повторное нажатие кнопки "Подписаться" без указания тегов приведет к отмене рассылки
+                </div>
               </form>
             </div>
           </div>
         </div>
       </div>
     </div>
-
+    {% endif %}
 
 
     <div
