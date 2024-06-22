@@ -6,6 +6,9 @@ from autoupdate.api import *
 from core import dto
 from utils.datetimeutils import delta_seconds
 
+from autoupdate.email import send_update_mail
+
+logger = logging.getLogger("autoupdate")
 
 def _update_university_info():
     logger.info("Обновляю информацию об университете")
@@ -53,9 +56,11 @@ def _autoupdate_author(
     logger.debug(
         f"Найдено {len(new_publications)} новых публикаций, удалению подлежит {len(removed_publications)} публикаций"
     )
+    new_publ_objects = set()
     for new in new_publications:
         pub, created = Publication.objects.get_or_create(html_content=new)
         pub.authors.add(author)
+        new_publ_objects.add(pub)
         pub.save()
     # Recommended disable removing publications with compatibility with aliases
     for old in removed_publications:
@@ -66,6 +71,7 @@ def _autoupdate_author(
                 publication.authors.remove(author)
             else:
                 publication.delete()
+    return new_publ_objects
 
 
 def _autoupdate_author_by_department(
@@ -96,28 +102,33 @@ def _autoupdate_author_by_department(
     logger.debug(
         f"Привязано публикаций {stats_paired_count}, на очереди добавление еще {len(library_publications)}"
     )
+    new_publ_objects = set()
     for new in library_publications:
         pub, created = Publication.objects.get_or_create(html_content=new)
         pub.authors.add(author)
+        new_publ_objects.add(pub)
         pub.save()
+    return new_publ_objects
 
 
 def autoupdate_author(author: Author):
     logger.debug(f"Обновление автора {author.library_primary_name} [{author.pk}]")
-    _autoupdate_author(author, allow_removing=True)
+    new_publs = set()
+    new_publs.update(_autoupdate_author(author, allow_removing=True))
     logger.debug(
         f"Обновление автора {author.library_primary_name} [{author.pk}] по кафедре {author.department.name}"
     )
-    _autoupdate_author_by_department(author, author.department)
+    new_publs.update(_autoupdate_author_by_department(author, author.department))
     logger.debug(f"Обновление даты обновления {author.library_primary_name}")
     for alias in AuthorAlias.objects.filter(author=author):
         logger.debug(
             f"Обновление автора {author.library_primary_name} по обозначению: {alias.alias}"
         )
-        _autoupdate_author(author, alias.alias)
-        _autoupdate_author_by_department(author, author.department, alias.alias)
+        new_publs.update(_autoupdate_author(author, alias.alias))
+        new_publs.update(_autoupdate_author_by_department(author, author.department, alias.alias))
     author.last_updated = now_datetime()
     author.save()
+    return new_publs
 
 
 def short_task_batch():
@@ -167,6 +178,7 @@ def global_autoupdate(skip_university_update=False):
         _update_university_info()
     obsolescence_time = SETTINGS.obsolescence_time_seconds
     batch_size = SETTINGS.request_batch_size
+    new_publs: set[Publication] = set()
     i = -1
     for i, author in enumerate(Author.objects.all()):
         if (
@@ -179,7 +191,7 @@ def global_autoupdate(skip_university_update=False):
         ):
             continue
         try:
-            autoupdate_author(author)
+            new_publs.update(autoupdate_author(author))
         except Exception as e:
             logger.error(
                 f"Неизвестная ошибка при обновлении автора {author.library_primary_name}, {author.pk}",
@@ -188,4 +200,5 @@ def global_autoupdate(skip_university_update=False):
         if (i + 1) % batch_size == 0:
             time.sleep(SLEEP_BATCH_TIME)
     TIMESTAMPS.register_global_update()
+    send_update_mail(new_publs)
     logger.info(f"Глобальное автообновление завершено. Обработано {i + 1} авторов")

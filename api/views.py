@@ -223,6 +223,7 @@ def stats(request):
     result_dict["next_update"] = int(calculate_next_update().timestamp())
     return APIResponse(result_dict)
 
+
 @api_view(["POST"])
 @login_required
 def subscribe_email_toggle(request):
@@ -232,8 +233,13 @@ def subscribe_email_toggle(request):
     except ValidationError:
         return APIResponse(status=400, message="Неправильно указана электронная почта")
     tags = request.POST.getlist("tags")
+    dep_id = int(request.POST.get("department"))
+    if dep_id == -1:
+        dep = None
+    else:
+        dep = Department.objects.get(pk=dep_id)
     tags = list(map(lambda x: Tag.objects.get_or_create(name=x)[0], tags))
-    object, created = EmailSubscriber.objects.get_or_create(email=email)
+    object, created = EmailSubscriber.objects.get_or_create(email=email, department=dep)
     subscribe_status = True
     if not created or object.tags == tags:
         object.delete()

@@ -10,4 +10,4 @@ from autoupdate.strategy import *
 
 
 def run():
-    print(CronTrigger.from_crontab("0 14 * * 0").get_next_fire_time(None, now_datetime()))
+    send_update_mail(Publication.objects.all())

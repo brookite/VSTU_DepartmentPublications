@@ -1,0 +1,58 @@
+import logging
+
+from django.core import mail
+from django.core.mail import get_connection
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
+from api.models import Publication, EmailSubscriber
+from departmentpublications.settings import SERVER_ADDRESS, DEFAULT_FROM_EMAIL
+
+logger = logging.getLogger("email")
+
+
+def send_update_mail(new_publications: set[Publication]):
+    tag_map = {}
+    con = get_connection()
+    con.open()
+    subject = 'Новые публикации на вашей кафедре'
+    for publ in new_publications:
+        tags = []
+        for author in publ.authors.all():
+            tags.extend(author.tag_set.all())
+        for tag in tags:
+            tag_map.setdefault(tag, [])
+            tag_map[tag].append(publ)
+    c = 0
+    for subscriber in EmailSubscriber.objects.all():
+        context = {"hostname": SERVER_ADDRESS}
+        mail_needed = False
+        if not len(subscriber.tags.all()):
+            context["by_tag"] = False
+            context["publications"] = list(new_publications)
+            if subscriber.department:
+                context["publications"] = list(filter(lambda x: x.department is not None and x.department == subscriber.department, context["publications"]))
+            mail_needed = len(context["publications"]) > 0 or mail_needed
+        else:
+            context["by_tag"] = True
+            context["tags"] = []
+            for tag in tag_map:
+                if tag in subscriber.tags.all():
+                    if subscriber.department:
+                        context["tags"].append([tag, list(filter(lambda x: x.department is not None and x.department == subscriber.department, tag_map[tag]))])
+                    else:
+                        context["tags"].append([tag, tag_map[tag]])
+                    mail_needed = len(context["tags"]) > 0 or mail_needed
+        if subscriber.department:
+            context["department_name"] = subscriber.department.name
+        else:
+            context["department_name"] = "все кафедры"
+
+        html_message = render_to_string('update_mail_template.html', context)
+        plain_message = strip_tags(html_message)
+        to = subscriber.email
+        if mail_needed:
+            mail.send_mail(subject, plain_message, f"Публикации кафедр ВолгГТУ <{DEFAULT_FROM_EMAIL}>", [to], html_message=html_message, connection=con)
+            c += 1
+    logger.info(f"Отправлено {c} писем подписчикам об обновлении")
+    con.close()

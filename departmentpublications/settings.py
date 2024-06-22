@@ -37,6 +37,17 @@ else:
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
 
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("SMTP_SERVER")
+EMAIL_PORT = os.getenv("SMTP_PORT") or 465
+EMAIL_HOST_USER = os.getenv("SMTP_MAIL")
+EMAIL_HOST_PASSWORD = os.getenv("SMTP_PASSWORD")
+EMAIL_USE_SSL = True
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+SERVER_EMAIL = EMAIL_HOST_USER
+EMAIL_ADMIN = EMAIL_HOST_USER
+
+SERVER_ADDRESS = os.getenv("SERVER_ADDRESS") or "localhost"
 
 # Application definition
 

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        a {
+            pointer-events: auto;
+            cursor: pointer;
+        }
+        .header {
+            background-color: #0b57a3;
+            color: white;
+            padding: 5px;
+        }
+        .content {
+            background-color: white;
+            padding: 20px;
+        }
+        .unsubscribe {
+            font-size: 12px;
+            color: #888888;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .button {
+            padding: 8px;
+            background-color: #0b57a3;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+        }
+    </style>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <div class="header">
+        <h3>Публикации кафедры ВолгГТУ</h3>
+        <h4 style="color: lightgray">{{ department_name }}</h4>
+    </div>
+    <div class="content">
+        <p>Здравствуйте! Были опубликованы новые статьи:</p>
+        {% if by_tag %}
+        {% for tag, publications in tags %}
+        <ul>
+            <li><strong>По тегу "{{ tag.name }}" </strong>
+                <ul>
+                    {% for publication in publications %}
+                        <li>{{ publication.html_content|safe}}</li>
+                    {% endfor %}
+                </ul>
+            </li>
+        </ul>
+        {% endfor %}
+        {% else %}
+            <ul>
+                {% for publication in publications %}
+                    <li>{{ publication.html_content }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <a class="button" href="http://{{ hostname }}/updates">Посмотреть обновления</a>
+    </div>
+    <div class="unsubscribe">
+        <p>Отписаться от рассылки или изменить теги для рассылки вы можете на сайте <a href="http://{{ hostname }}">Публикаций Кафедры ВолгГТУ</a></p>
+    </div>
+</body>
+</html>

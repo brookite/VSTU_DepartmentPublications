@@ -380,10 +380,11 @@ $(".subscribeEmail").on("click", function () {
         traditional : true,
         data: {
             "email": email_value,
+            "department": localStorage.getItem("departmentId") == undefined ? -1 : localStorage.getItem("departmentId"),
             "tags": updateTagList("emailTagsContainer")
         },
         success: function (response) {
-            if (response["items"] != undefined) {
+            if (response["type"] !== "error") {
                if (response["items"]["changed"]) {
                    if (response["items"]["subscribe_status"]) {
                        flash("Вы успешно подписаны на рассылку по электронной почте");
@@ -398,7 +399,7 @@ $(".subscribeEmail").on("click", function () {
            }
         },
         error: function () {
-          flash("Ошибка при получении информации о подписке");
+          flash("Ошибка при получении информации о подписке. Проверьте правильность введенной почты");
         }
       });
 
@@ -410,7 +411,7 @@ $(".updateRequestBtn").on("click", function () {
         method: 'GET',
         success: function (response) {
             let minutes = Math.floor(response["items"]["update_interval"] / 60);
-           if (response["items"] != undefined) {
+           if (response["type"] !== "error") {
                if (response["items"]["result"]) {
                    flash(`Обновление успешно запрошено. Оно будет выполнено в течение ${minutes} минут`);
                } else {
