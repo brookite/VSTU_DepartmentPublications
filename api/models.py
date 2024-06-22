@@ -97,6 +97,7 @@ class Publication(models.Model):
 class EmailSubscriber(models.Model):
     email = models.CharField(max_length=96, verbose_name="E-mail")
     tags = models.ManyToManyField(Tag, verbose_name="Теги")
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         verbose_name = "Подписчик на обновления"
