@@ -6,12 +6,15 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
 from api.models import Publication, EmailSubscriber
-from departmentpublications.settings import SERVER_ADDRESS, DEFAULT_FROM_EMAIL
+from departmentpublications.settings import SERVER_ADDRESS, DEFAULT_FROM_EMAIL, EMAIL_HOST_USER
 
 logger = logging.getLogger("email")
 
 
 def send_update_mail(new_publications: set[Publication]):
+    if not EMAIL_HOST_USER:
+        logger.debug("Рассылка по электронной почте не настроена. Письма не отправляются")
+        return
     tag_map = {}
     con = get_connection()
     con.open()
