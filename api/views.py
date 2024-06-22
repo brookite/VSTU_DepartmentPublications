@@ -2,6 +2,8 @@ import logging
 from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.generics import ListAPIView
@@ -225,6 +227,10 @@ def stats(request):
 @login_required
 def subscribe_email_toggle(request):
     email = request.POST.get("email")
+    try:
+        validate_email(email)
+    except ValidationError:
+        return APIResponse(status=400, message="Неправильно указана электронная почта")
     tags = request.POST.getlist("tags")
     tags = list(map(lambda x: Tag.objects.get_or_create(name=x)[0], tags))
     object, created = EmailSubscriber.objects.get_or_create(email=email)
