@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-za10x@+s^*o=#&s$6%0_&j!t_vc&-aqlrv=6%#%b+_ucs)5+7*"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     load_dotenv("./dev.env")
