@@ -11,11 +11,11 @@ from django.shortcuts import render, redirect
 from django.utils import dateformat
 
 from api import models
-from api.models import Author, Publication, Department, Tag
+from api.models import Author, Publication, Department, Tag, Timestamps
 from api.settings import Settings
 from autoupdate.api import calculate_next_update, calculate_next_global_update
 from departmentpublications import settings
-from utils.datetimeutils import now_datetime
+from utils.datetimeutils import now_datetime, from_timestamp
 
 
 def index(request):
@@ -149,6 +149,14 @@ def update_view(request):
 
 def account_profile(request):
     return redirect("/", permanent=True)
+
+
+@login_required
+def reset_autoupdate_request(request):
+    obj = Timestamps.objects.get(param_name="last_global_update_request")
+    obj.timestamp = from_timestamp(0)
+    obj.save()
+    return HttpResponse("OK!")
 
 
 @login_required
