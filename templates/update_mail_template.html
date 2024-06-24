@@ -58,7 +58,7 @@
         {% else %}
             <ul>
                 {% for publication in publications %}
-                    <li>{{ publication.html_content }}</li>
+                    <li>{{ publication.html_content|safe }}</li>
                 {% endfor %}
             </ul>
         {% endif %}
