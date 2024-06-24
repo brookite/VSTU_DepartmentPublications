@@ -1,3 +1,4 @@
+import re
 from pstats import Stats
 
 from rest_framework import serializers
@@ -32,6 +33,13 @@ class AuthorSerializer(serializers.ModelSerializer):
     def get_last_updated(self, obj):
         last_updated = obj.last_updated
         return int(last_updated.timestamp()) if last_updated else None
+
+    def validate_library_primary_name(self, value):
+        library_name_regex = re.compile(r"^([\(\)\w-]{1,30})\s+([\(\)\w-]{1,5})\s{0,}\.\s{0,}([\(\)\w-]{1,5})\s?\.?$")
+        if not (match := library_name_regex.match(value)):
+            raise serializers.ValidationError("Неверно заданы фамилия и инициалы для библиотеки. Правильный формат: \"Иванов И.И.\"")
+        else:
+            return f"{match.group(1)} {match.group(2)}.{match.group(3)}."
 
     def create(self, validated_data):
         aliases_data = validated_data.pop("aliases_list", [])

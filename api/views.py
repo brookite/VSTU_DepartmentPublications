@@ -36,6 +36,7 @@ class AuthorSuggestions(APIView):
         else:
             return APIResponse(
                 data=serializer.errors,
+                message="Validation Error",
                 status=400,
             )
 
@@ -57,7 +58,7 @@ class AuthorViewSet(viewsets.ViewSet):
             author = serializer.save()
             ShortUpdateTasks.objects.create(author=author)
             return APIResponse(serializer.data, status=status.HTTP_201_CREATED)
-        return APIResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return APIResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST, message="Validation Error")
 
     @action(detail=False, methods=["get"])
     def search(self, request):
@@ -66,7 +67,7 @@ class AuthorViewSet(viewsets.ViewSet):
             queryset = Author.objects.filter(**input_serializer.validated_data)
             output_serializer = self.serializer_class(data=queryset, many=True)
             return APIResponse(output_serializer.data, status=status.HTTP_200_OK)
-        return APIResponse(input_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return APIResponse(input_serializer.errors, status=status.HTTP_400_BAD_REQUEST, message="Validation Error")
 
     @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
     def delete(self, request):
@@ -95,6 +96,15 @@ class AuthorViewSet(viewsets.ViewSet):
         full_name = request.data.get("full_name", author.full_name)
         library_name = request.data.get("library_name", author.library_primary_name)
         department = request.data.get("department_id", author.department.id)
+        serializer = self.serializer_class(author, data={
+            "full_name": full_name,
+            "library_primary_name": library_name,
+        }, partial=True)
+        if not serializer.is_valid():
+            return APIResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST, message="Validation Error")
+        else:
+            # TODO: possible bad code, need rewriting with serializer
+            library_name = serializer.validated_data["library_primary_name"]
         author.full_name = full_name
         author.library_primary_name = library_name
         author.department = Department.objects.filter(id=department).first()
@@ -111,9 +121,7 @@ class AuthorViewSet(viewsets.ViewSet):
         ):
             author.authoralias_set.add(alias)
         author.save()
-        serializer = self.serializer_class(
-            Author.objects.filter(pk=author.pk), many=True
-        )
+        serializer = self.serializer_class(author)
         return APIResponse(data=serializer.data)
 
 

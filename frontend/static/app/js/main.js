@@ -105,8 +105,8 @@ function fetchSuggestions(query) {
     dataType: "html",
       traditional : true,
     data: {
-      "q": query,
-      "department": localStorage.getItem("departmentId"),
+        "q": query,
+        "department": localStorage.getItem("departmentId"),
         "tags": updateTagList("searchFilterTagsContainer")
     },
     success: function (data) {
@@ -302,8 +302,16 @@ if (!(secondaryEndpoints.includes(endpoint))) {
       success: function (response) {
         flash("Данные успешно сохранены")
       },
-      error: function () {
-        flash("Данные не удалось сохранить")
+      error: function (data) {
+        flash("Данные не удалось сохранить");
+        data = data.responseJSON;
+            if (data["message"] === "Validation Error") {
+                for (let field in data["items"]) {
+                    for (let message of data["items"][field]) {
+                        flash(message);
+                    }
+                }
+            }
       }
     });
   });
@@ -345,8 +353,16 @@ if (!(secondaryEndpoints.includes(endpoint))) {
            $('#addPersonModal').modal('hide');
            window.location.reload();
         },
-        error: function () {
-          flash("Ошибка при добавлении");
+        error: function (data) {
+            flash("Ошибка при добавлении");
+            data = data.responseJSON;
+            if (data["message"] === "Validation Error") {
+                for (let field in data["items"]) {
+                    for (let message of data["items"][field]) {
+                        flash(message);
+                    }
+                }
+            }
         }
       });
   });
