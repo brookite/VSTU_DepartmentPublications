@@ -24,13 +24,13 @@ def schedule_observer(job):
     if last_global_update_request != TIMESTAMPS.last_global_update_request:
         last_global_update_request = TIMESTAMPS.last_global_update_request
         logger.info("Начинаю внеплановое глобальное обновление по запросу")
-        global_autoupdate_task(False)
+        global_autoupdate_task(True)
 
 
-def global_autoupdate_task(update_university=True):
+def global_autoupdate_task(skip_update_university=False):
     global LOCK_UPDATE
     LOCK_UPDATE = True
-    global_autoupdate(update_university)
+    global_autoupdate(skip_update_university)
     LOCK_UPDATE = False
 
 
