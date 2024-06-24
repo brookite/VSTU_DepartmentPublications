@@ -41,6 +41,7 @@ function setDepartments(facultyId) {
       container.appendChild(option);
     }
   }
+  $("#addDepartment").val(parseInt(localStorage.getItem("departmentId")));
   localStorage.setItem("facultyId", parseInt(facultyId));
   if (!(secondaryEndpoints.includes(endpoint))) {
     fetchSuggestions("")
