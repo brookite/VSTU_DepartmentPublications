@@ -30,11 +30,12 @@ def send_update_mail(new_publications: set[Publication]):
     for subscriber in EmailSubscriber.objects.all():
         context = {"hostname": SERVER_ADDRESS}
         mail_needed = False
+        author_filter = lambda x: any(map(lambda y: y.department == subscriber.department, x.authors.all()))
         if not len(subscriber.tags.all()):
             context["by_tag"] = False
             context["publications"] = list(new_publications)
             if subscriber.department:
-                context["publications"] = list(filter(lambda x: x.department is not None and x.department == subscriber.department, context["publications"]))
+                context["publications"] = list(filter(author_filter, context["publications"]))
             mail_needed = len(context["publications"]) > 0 or mail_needed
         else:
             context["by_tag"] = True
@@ -42,7 +43,8 @@ def send_update_mail(new_publications: set[Publication]):
             for tag in tag_map:
                 if tag in subscriber.tags.all():
                     if subscriber.department:
-                        context["tags"].append([tag, list(filter(lambda x: x.department is not None and x.department == subscriber.department, tag_map[tag]))])
+                        context["tags"].append([tag, list(
+                            filter(author_filter, tag_map[tag]))])
                     else:
                         context["tags"].append([tag, tag_map[tag]])
                     mail_needed = len(context["tags"]) > 0 or mail_needed
@@ -55,7 +57,8 @@ def send_update_mail(new_publications: set[Publication]):
         plain_message = strip_tags(html_message)
         to = subscriber.email
         if mail_needed:
-            mail.send_mail(subject, plain_message, f"Публикации кафедр ВолгГТУ <{DEFAULT_FROM_EMAIL}>", [to], html_message=html_message, connection=con)
+            mail.send_mail(subject, plain_message, f"Публикации кафедр ВолгГТУ <{DEFAULT_FROM_EMAIL}>", [to],
+                           html_message=html_message, connection=con)
             c += 1
     logger.info(f"Отправлено {c} писем подписчикам об обновлении")
     con.close()
