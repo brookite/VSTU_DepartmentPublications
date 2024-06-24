@@ -7,6 +7,8 @@ global_autoupdate_job = None
 schedule = SETTINGS.cron_schedule
 last_global_update_request = TIMESTAMPS.last_global_update_request
 
+LOCK_UPDATE = False
+
 
 def schedule_observer(job):
     logger.debug("Проверка изменения расписания")
@@ -22,7 +24,20 @@ def schedule_observer(job):
     if last_global_update_request != TIMESTAMPS.last_global_update_request:
         last_global_update_request = TIMESTAMPS.last_global_update_request
         logger.info("Начинаю внеплановое глобальное обновление по запросу")
-        global_autoupdate(True)
+        global_autoupdate_task(False)
+
+
+def global_autoupdate_task(update_university=True):
+    global LOCK_UPDATE
+    LOCK_UPDATE = True
+    global_autoupdate(update_university)
+    LOCK_UPDATE = False
+
+
+def short_autoupdate_task():
+    if LOCK_UPDATE:
+        return
+    short_task_batch()
 
 
 def run():
@@ -31,10 +46,10 @@ def run():
     try:
         global global_autoupdate_job
         global_autoupdate_job = scheduler.add_job(
-            global_autoupdate, CronTrigger.from_crontab(schedule)
+            global_autoupdate_task, CronTrigger.from_crontab(schedule)
         )
         scheduler.add_job(
-            short_task_batch, IntervalTrigger(seconds=SETTINGS.short_tasks_check_interval)
+            short_autoupdate_task, IntervalTrigger(seconds=SETTINGS.short_tasks_check_interval)
         )
         scheduler.add_job(
             schedule_observer, IntervalTrigger(minutes=SETTINGS.reschedule_minutes), args=[global_autoupdate_job]
