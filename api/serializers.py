@@ -19,8 +19,8 @@ class AuthorSerializer(serializers.ModelSerializer):
     tags = serializers.SerializerMethodField()
     last_updated = serializers.SerializerMethodField()
 
-    aliases_list = serializers.CharField(required=False)
-    tags_list = serializers.CharField(required=False)
+    aliases_list = serializers.ListField(required=False)
+    tags_list = serializers.ListField(required=False)
 
     def get_aliases(self, obj):
         author_aliases = AuthorAlias.objects.filter(author=obj)
