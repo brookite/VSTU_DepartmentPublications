@@ -8,7 +8,7 @@ from django.utils.html import strip_tags
 from api.models import Publication, EmailSubscriber
 from departmentpublications.settings import SERVER_ADDRESS, DEFAULT_FROM_EMAIL, EMAIL_HOST_USER
 
-logger = logging.getLogger("email")
+logger = logging.getLogger("autoupdate")
 
 
 def send_update_mail(new_publications: set[Publication]):
