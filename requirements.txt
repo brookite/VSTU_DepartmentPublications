@@ -1,4 +1,4 @@
-Django==5.0.10
+Django==5.0.13
 djangorestframework
 requests
 lxml
