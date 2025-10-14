@@ -9,8 +9,6 @@ services:
   django:
     build:
       context: .
-    ports:
-      - '8000:8000'
     container_name: django
     restart: always
     depends_on:
@@ -31,6 +29,7 @@ services:
 
   db:
     image: postgres:latest
+    restart: always
     env_file:
       - .env
     ports: 
