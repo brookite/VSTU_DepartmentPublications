@@ -9,11 +9,19 @@ from core.vstulib import VSTULibrary
 from utils.datetimeutils import delta_seconds, now_datetime
 
 LIBRARY = VSTULibrary()
-SETTINGS = SettingsHighLevel()
+SETTINGS = None
 TIMESTAMPS = TimestampsHighLevel()
 SLEEP_BATCH_TIME = 120
 INFO_UPDATE_SLEEP_TIME = 10
 logger = logging.getLogger("autoupdate")
+
+
+def initialize_settings() -> SettingsHighLevel:
+    global SETTINGS
+
+    if not SETTINGS:
+        SETTINGS = SettingsHighLevel()
+    return SETTINGS
 
 
 def calculate_next_update():

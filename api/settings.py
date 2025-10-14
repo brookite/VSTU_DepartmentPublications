@@ -221,7 +221,7 @@ class Timestamps:
     def clear_short_updates(self):
         s = Settings()
         now = now_datetime()
-        if (Timestamps.las and
+        if (Timestamps._last_update_request and
                 (now - Timestamps._last_update_request).total_seconds() <= s.short_batch_reset_timeout):
             logger.debug("В коротком обновлении отказано")
             return False
