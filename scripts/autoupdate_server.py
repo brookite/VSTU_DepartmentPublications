@@ -4,8 +4,8 @@ from apscheduler.triggers.interval import IntervalTrigger
 from autoupdate.strategy import *
 
 global_autoupdate_job = None
-schedule = SETTINGS.cron_schedule
-last_global_update_request = TIMESTAMPS.last_global_update_request
+schedule = get_settings().cron_schedule
+last_global_update_request = get_timestamps().last_global_update_request
 
 LOCK_UPDATE = False
 
@@ -16,13 +16,13 @@ def schedule_observer(job):
     global schedule
     global last_global_update_request
 
-    if global_autoupdate_job and schedule != SETTINGS.cron_schedule:
-        schedule = SETTINGS.cron_schedule
+    if global_autoupdate_job and schedule != get_settings().cron_schedule:
+        schedule = get_settings().cron_schedule
         global_autoupdate_job = global_autoupdate_job.reschedule(trigger=CronTrigger.from_crontab(schedule))
         logger.debug(f"Расписание было изменено на {calculate_next_global_update()}")
 
-    if last_global_update_request != TIMESTAMPS.last_global_update_request:
-        last_global_update_request = TIMESTAMPS.last_global_update_request
+    if last_global_update_request != get_timestamps().last_global_update_request:
+        last_global_update_request = get_timestamps().last_global_update_request
         logger.info("Начинаю внеплановое глобальное обновление по запросу")
         global_autoupdate_task(True)
 
@@ -49,10 +49,10 @@ def run():
             global_autoupdate_task, CronTrigger.from_crontab(schedule)
         )
         scheduler.add_job(
-            short_autoupdate_task, IntervalTrigger(seconds=SETTINGS.short_tasks_check_interval)
+            short_autoupdate_task, IntervalTrigger(seconds=get_settings().short_tasks_check_interval)
         )
         scheduler.add_job(
-            schedule_observer, IntervalTrigger(minutes=SETTINGS.reschedule_minutes), args=[global_autoupdate_job]
+            schedule_observer, IntervalTrigger(minutes=get_settings().reschedule_minutes), args=[global_autoupdate_job]
         )
         logger.info("Задачи автообновления добавлены. Начинаю планирование...")
         scheduler.start()

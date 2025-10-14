@@ -137,7 +137,7 @@ def short_task_batch():
     if ShortUpdateTasks.objects.count() == 0:
         return
     global_update_time = calculate_next_global_update()
-    last_update = TIMESTAMPS.last_short_update
+    last_update = get_timestamps().last_short_update
     if (
         abs(
             delta_seconds(
@@ -145,29 +145,29 @@ def short_task_batch():
                 now_datetime()
             )
         )
-        < SETTINGS.obsolescence_time_seconds
+        < get_settings().obsolescence_time_seconds
     ):
         logger.debug(
             f"{global_update_time} будет/было глобальное автообновление, не выполняю одиночные задачи"
         )
         return
     if now_datetime() <= last_update + datetime.timedelta(
-        seconds=SETTINGS.short_task_batch_update_delay
+        seconds=get_settings().short_task_batch_update_delay
     ):
         logger.debug(
             "Недавно было выполнение одиночных задач. Ожидание истечения таймаута"
         )
         return
     tasks = ShortUpdateTasks.objects.all()
-    tasks = tasks[: min(SETTINGS.max_short_tasks, len(tasks))]
+    tasks = tasks[: min(get_settings().max_short_tasks, len(tasks))]
     logger.info(f"Обработка {len(tasks)} одиночных задач начата")
-    batch_size = SETTINGS.request_batch_size
+    batch_size = get_settings().request_batch_size
     for i, task in enumerate(tasks):
         autoupdate_author(task.author)
         task.delete()
         if i % batch_size == 0:
             time.sleep(SLEEP_BATCH_TIME)
-    TIMESTAMPS.register_short_update()
+    get_timestamps().register_short_update()
     logger.info(f"Обработка {len(tasks)} одиночных задач завершена")
 
 
@@ -176,8 +176,8 @@ def global_autoupdate(skip_university_update=False):
     ShortUpdateTasks.objects.all().delete()
     if not skip_university_update:
         _update_university_info()
-    obsolescence_time = SETTINGS.obsolescence_time_seconds
-    batch_size = SETTINGS.request_batch_size
+    obsolescence_time = get_settings().obsolescence_time_seconds
+    batch_size = get_settings().request_batch_size
     new_publs: set[Publication] = set()
     i = -1
     for i, author in enumerate(Author.objects.all()):
@@ -199,6 +199,6 @@ def global_autoupdate(skip_university_update=False):
             )
         if (i + 1) % batch_size == 0:
             time.sleep(SLEEP_BATCH_TIME)
-    TIMESTAMPS.register_global_update()
+    get_timestamps().register_global_update()
     send_update_mail(new_publs)
     logger.info(f"Глобальное автообновление завершено. Обработано {i + 1} авторов")
