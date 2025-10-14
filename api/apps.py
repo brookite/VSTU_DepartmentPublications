@@ -1,5 +1,4 @@
 from django.apps import AppConfig
-from autoupdate.api import initialize_settings
 
 
 class ApiConfig(AppConfig):
@@ -7,4 +6,5 @@ class ApiConfig(AppConfig):
     name = "api"
 
     def ready(self):
+        from autoupdate.api import initialize_settings
         initialize_settings()
