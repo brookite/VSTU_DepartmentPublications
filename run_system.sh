@@ -1,10 +1,5 @@
 #!/bin/bash
 
-until pg_isready -h "$DB_HOST" -U "$POSTGRES_USER"; do
-  echo "Waiting for postgres..."
-  sleep 2
-done
-
 python3.12 manage.py makemigrations
 python3.12 manage.py migrate
 python3.12 manage.py collectstatic --noinput
