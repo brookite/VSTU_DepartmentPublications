@@ -1,5 +1,6 @@
 import datetime
 import logging
+import re
 
 from apscheduler.triggers.cron import CronTrigger
 
@@ -75,3 +76,19 @@ def schedule_short_task(author: Author):
     ShortUpdateTasks.objects.get_or_create(author=author)
     logger.info("Добавлена новая одиночная задача")
     return True
+
+
+PUBL_SEP_PATTERN = re.compile(r"\s+[–—‒―⸺⸻-]+\s+")
+PUBL_YEAR = re.compile(r"(19\d{2}|20\d{2}|21\d{2})")
+PUBL_COMMA = re.compile(r",\s*")
+
+
+def parse_publ_year(s: str):
+    components = re.split(PUBL_SEP_PATTERN, s)
+    for c in components[::-1]:
+        c_ = re.split(PUBL_COMMA, c)
+        for c__ in c_:
+            match = re.match(PUBL_YEAR, c__)
+            if match:
+                return int(match.group(0))
+    return None

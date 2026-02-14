@@ -140,7 +140,6 @@ class AuthorViewSet(viewsets.ViewSet):
 
 class PublicationListView(ListAPIView):
     serializer_class = PublicationSerializer
-    MAX_PUBLICATIONS = 5120
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -148,7 +147,10 @@ class PublicationListView(ListAPIView):
         return APIResponse(data=serializer.data)
 
     def get_queryset(self):  # type: ignore
-        queryset = Publication.objects.all()
+        sort = self.request.GET.get("sort")
+        filter_key= "-sort_order" if sort != "asc" else "sort_order"
+
+        queryset = Publication.objects.order_by(filter_key)
 
         department_id = self.request.GET.get("department")
         if department_id:
@@ -180,7 +182,11 @@ class PublicationListView(ListAPIView):
         if author_id:
             queryset = queryset.filter(authors__id=author_id)
 
-        return queryset[:self.MAX_PUBLICATIONS]
+        year = self.request.GET.get("year")
+        if year:
+            queryset = queryset.filter(sort_order=year)
+
+        return queryset.all()
 
 
 class FacultyDepartmentView(APIView):

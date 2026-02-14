@@ -3,6 +3,50 @@
 import django.db.models.deletion
 from django.db import migrations, models
 
+from autoupdate.api import parse_publ_year
+
+
+def parse_year_from_content(apps, schema_editor):
+    Publication = apps.get_model("api", "Publication")
+    
+    # Для оптимизации можно использовать bulk_update, если записей очень много,
+    # но цикл с save() надежнее для сложной логики.
+    for pub in Publication.objects.all():
+        match = parse_publ_year(pub.html_content)
+        if match:
+            try:
+                pub.sort_order = match
+                pub.save(update_fields=['sort_order'])
+            except ValueError:
+                pass
+
+
+def fix_null_departments(apps, schema_editor):
+    """
+    Заполняет пустые поля department у Author.
+    Приоритет: ID 85 -> ID 1.
+    """
+    Author = apps.get_model("api", "Author")
+    Department = apps.get_model("api", "Department")
+
+    # Ищем авторов, у которых department IS NULL
+    authors_without_dept = Author.objects.filter(department__isnull=True)
+    
+    if authors_without_dept.exists():
+        # Пытаемся найти кафедру 85
+        target_dept = Department.objects.filter(id=85).first()
+        
+        # Если 85 нет, берем 1
+        if not target_dept:
+            target_dept = Department.objects.filter(id=1).first()
+        
+        # Если нашли какую-то кафедру, обновляем всех "беспризорных" авторов разом
+        if target_dept:
+            authors_without_dept.update(department=target_dept)
+        else:
+            print("WARNING: Не найдены кафедры с ID 85 или 1. Авторы останутся без кафедры (может вызвать ошибку IntegrityError).")
+
+
 
 class Migration(migrations.Migration):
 
@@ -18,6 +62,8 @@ class Migration(migrations.Migration):
                 default=0, verbose_name="Поле сортировки (год публикации)"
             ),
         ),
+        migrations.RunPython(parse_year_from_content, migrations.RunPython.noop),
+        migrations.RunPython(fix_null_departments, migrations.RunPython.noop),
         migrations.AlterField(
             model_name="author",
             name="department",

@@ -1,5 +1,6 @@
 import datetime
 import logging
+import re
 import time
 
 from api.models import Author, AuthorAlias, Department, Faculty, Publication, ShortUpdateTasks
@@ -10,12 +11,14 @@ from autoupdate.api import (
     calculate_next_global_update,
     get_settings,
     get_timestamps,
+    parse_publ_year,
 )
 from autoupdate.email import send_update_mail
 from core import dto
 from utils.datetimeutils import delta_seconds, now_datetime
 
 logger = logging.getLogger("autoupdate")
+
 
 def _update_university_info():
     logger.info("Обновляю информацию об университете")
@@ -55,7 +58,8 @@ def _autoupdate_author(
     )
     new_publ_objects = set()
     for new in new_publications:
-        pub, created = Publication.objects.get_or_create(html_content=new)
+        year = parse_publ_year(new)
+        pub, created = Publication.objects.get_or_create(html_content=new, sort_order=year or 0)
         pub.authors.add(author)
         new_publ_objects.add(pub)
         pub.save()
@@ -74,7 +78,7 @@ def _autoupdate_author(
 def _autoupdate_author_by_department(
     author: Author, dep: Department, use_alias: str | None = None
 ):
-    name = use_alias if use_alias else author.library_primary_name
+    name = use_alias or author.library_primary_name
     library_publications = {x.info for x in LIBRARY.search_by_author(
                 dto.Author(name),
                 dto.Department(
@@ -96,7 +100,8 @@ def _autoupdate_author_by_department(
     )
     new_publ_objects = set()
     for new in library_publications:
-        pub, created = Publication.objects.get_or_create(html_content=new)
+        year = parse_publ_year(new)
+        pub, created = Publication.objects.get_or_create(html_content=new, sort_order=year or 0)
         pub.authors.add(author)
         new_publ_objects.add(pub)
         pub.save()

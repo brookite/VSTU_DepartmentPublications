@@ -41,6 +41,38 @@
                       <span class="badge text-bg-primary" data-tag-id="{{ tag.pk }}">{{ tag.name }}</span>
                   {% endfor %}
               </div>
+              <!-- Панель фильтрации и сортировки -->
+              <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+                  <div class="d-flex gap-2 align-items-center">
+                      <!-- Выбор года -->
+                      <select id="pubYearFilter" class="form-select w-auto">
+                          <option value="all" {% if selected_year == "all" %}selected{% endif %}>Все годы</option>
+                          {% for year in years_range %}
+                              <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                          {% endfor %}
+                      </select>
+                      
+                      <!-- Кнопка сортировки -->
+                      <button 
+                          id="pubSortBtn" 
+                          class="btn {% if sort_direction == 'asc' %}btn-primary active{% else %}btn-outline-secondary{% endif %}" 
+                          type="button"
+                          data-bs-toggle="button" 
+                          autocomplete="off"
+                          data-sort-dir="{{ sort_direction }}"
+                          title="Сортировка по году"
+                      >
+                          {% if sort_direction == 'asc' %}
+                              <i class="ri-sort-asc"></i> По возрастанию
+                          {% else %}
+                              <i class="ri-sort-desc"></i> По убыванию
+                          {% endif %}
+                      </button>
+                  </div>
+                  
+                  <!-- Отображение кол-ва найденных -->
+                  <small class="text-muted">Найдено: {{ publications.count }}</small>
+              </div>
               <ul class="list-group">
                   {% for pub in publications %}
                 <li
@@ -189,3 +221,61 @@
               </section>
             </div>
           </div>
+<script>
+    $(document).ready(function() {
+        const authorId = "{{ author.pk }}";
+        const yearSelect = $("#pubYearFilter");
+        const sortBtn = $("#pubSortBtn");
+
+        // Функция перезагрузки списка с новыми параметрами
+        function reloadPublications() {
+            const year = yearSelect.val();
+            // Если кнопка нажата (active) или имеет класс btn-primary -> asc, иначе desc
+            // Но мы будем читать из data-атрибута для надежности, который переключим ниже
+            const sort = sortBtn.attr("data-sort-dir");
+
+            $.ajax({
+                url: "/views/author_info",
+                type: "GET",
+                data: {
+                    "author_id": authorId,
+                    "year": year,
+                    "sort": sort
+                },
+                dataType: "html",
+                success: function (data) {
+                    // Обновляем содержимое контейнера
+                    $(".publView").html(data);
+                    
+                    // Важно: После перезагрузки нужно восстановить вкладку "Публикации" как активную,
+                    // так как HTML рендерится заново и сбрасывает состояние табов Bootstrap.
+                    // (Bootstrap 5 JS API)
+                    const triggerEl = document.querySelector('#publications-tab');
+                    const tab = new bootstrap.Tab(triggerEl);
+                    tab.show();
+                },
+                error: function (xhr, status, error) {
+                    console.error("Ошибка фильтрации: " + error);
+                },
+            });
+        }
+
+        // Обработка изменения года
+        yearSelect.on("change", function() {
+            reloadPublications();
+        });
+
+        // Обработка клика по кнопке сортировки
+        sortBtn.on("click", function(e) {
+            e.preventDefault(); // Предотвращаем стандартное поведение кнопки
+            
+            const currentDir = $(this).attr("data-sort-dir");
+            const newDir = currentDir === "desc" ? "asc" : "desc";
+            
+            // Обновляем атрибут (визуальную часть обновит перезагрузка HTML)
+            $(this).attr("data-sort-dir", newDir);
+            
+            reloadPublications();
+        });
+    });
+</script>

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from django.db import models
 from django.db.models import ManyToManyField
 
+
 class Faculty(models.Model):
     name = models.CharField(max_length=128, verbose_name="Название")
     library_id = models.IntegerField(verbose_name="ID в библиотеке")
@@ -99,7 +100,6 @@ class Publication(models.Model):
 
     def __str__(self):
         return self.html_content
-
 
 
 class EmailSubscriber(models.Model):

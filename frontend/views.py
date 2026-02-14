@@ -77,8 +77,26 @@ def author_list(request):
 
 def author_details(request):
     author_id = request.GET.get("author_id")
+    # Получаем параметры фильтрации из GET-запроса
+    selected_year = request.GET.get("year", "all")
+    sort_direction = request.GET.get("sort", "desc")  # по умолчанию убывание
+
     author = Author.objects.get(id=author_id)
     publications = Publication.objects.filter(authors__in=[author])
+
+    # 1. Фильтрация по году
+    if selected_year and selected_year != "all":
+        # sort_order используется как год согласно вашей модели
+        publications = publications.filter(sort_order=selected_year)
+
+    # 2. Сортировка
+    if sort_direction == "asc":
+        publications = publications.order_by("sort_order")
+    else:
+        publications = publications.order_by("-sort_order")
+
+    years_range = [publ.sort_order for publ in publications if 1900 <= publ.sort_order <= 2200]
+
     return render(
         request,
         "people_info.html",
@@ -89,6 +107,10 @@ def author_details(request):
             "publications": publications,
             "user": request.user,
             "departments": Department.objects.all(),
+            # Передаем новые переменные в шаблон
+            "years_range": years_range,
+            "selected_year": selected_year if selected_year == "all" else int(selected_year),
+            "sort_direction": sort_direction,
         },
     )
 
