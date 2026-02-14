@@ -4,19 +4,37 @@ from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, action
+from rest_framework import status, viewsets
+from rest_framework.decorators import action, api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from api import settings
+from api.models import (
+    Author,
+    AuthorAlias,
+    Department,
+    EmailSubscriber,
+    Faculty,
+    Publication,
+    Settings,
+    ShortUpdateTasks,
+    Tag,
+    Timestamps,
+)
+from api.serializers import (
+    AuthorSerializer,
+    DepartmentSerializer,
+    FacultySerializer,
+    PublicationSerializer,
+    QuerySerializer,
+    TagSerializer,
+)
 from api.utils import APIResponse
+from autoupdate.api import calculate_next_global_update, calculate_next_update
 from core.vstulib import VSTULibrary
-from api.serializers import *
-
-from autoupdate.api import calculate_next_global_update
-from autoupdate.api import calculate_next_update
 
 logger = logging.getLogger("api")
 
@@ -31,7 +49,7 @@ class AuthorSuggestions(APIView):
         )
         if serializer.is_valid():
             return Response(
-                data=vstulib.get_author_suggestions(serializer.validated_data["q"])
+                data=vstulib.get_author_suggestions(serializer.validated_data["q"]) # type: ignore
             )
         else:
             return APIResponse(
@@ -64,7 +82,7 @@ class AuthorViewSet(viewsets.ViewSet):
     def search(self, request):
         input_serializer = self.serializer_class(data=request.query_params)
         if input_serializer.is_valid():
-            queryset = Author.objects.filter(**input_serializer.validated_data)
+            queryset = Author.objects.filter(**input_serializer.validated_data) # type: ignore
             output_serializer = self.serializer_class(data=queryset, many=True)
             return APIResponse(output_serializer.data, status=status.HTTP_200_OK)
         return APIResponse(input_serializer.errors, status=status.HTTP_400_BAD_REQUEST, message="Validation Error")
@@ -95,7 +113,7 @@ class AuthorViewSet(viewsets.ViewSet):
         author = Author.objects.get(pk=int(id))
         full_name = request.data.get("full_name", author.full_name)
         library_name = request.data.get("library_name", author.library_primary_name)
-        department = request.data.get("department_id", author.department.id)
+        department = request.data.get("department_id", author.department.id) # type: ignore
         serializer = self.serializer_class(author, data={
             "full_name": full_name,
             "library_primary_name": library_name,
@@ -104,21 +122,16 @@ class AuthorViewSet(viewsets.ViewSet):
             return APIResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST, message="Validation Error")
         else:
             # TODO: possible bad code, need rewriting with serializer
-            library_name = serializer.validated_data["library_primary_name"]
+            library_name = serializer.validated_data["library_primary_name"] # type: ignore
         author.full_name = full_name
         author.library_primary_name = library_name
-        author.department = Department.objects.filter(id=department).first()
+        author.department = Department.objects.filter(id=department).first() # type: ignore
         author.tag_set.clear()
-        for tag in list(map(lambda x: Tag.objects.get_or_create(name=x)[0], tags)):
+        for tag in [Tag.objects.get_or_create(name=x)[0] for x in tags]:
             author.tag_set.add(tag)
         for alias in author.authoralias_set.all():
             alias.delete()
-        for alias in list(
-            map(
-                lambda x: AuthorAlias.objects.get_or_create(alias=x, author=author)[0],
-                aliases,
-            )
-        ):
+        for alias in [AuthorAlias.objects.get_or_create(alias=x, author=author)[0] for x in aliases]:
             author.authoralias_set.add(alias)
         author.save()
         serializer = self.serializer_class(author)
@@ -127,46 +140,47 @@ class AuthorViewSet(viewsets.ViewSet):
 
 class PublicationListView(ListAPIView):
     serializer_class = PublicationSerializer
+    MAX_PUBLICATIONS = 5120
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return APIResponse(data=serializer.data)
 
-    def get_queryset(self):
+    def get_queryset(self):  # type: ignore
         queryset = Publication.objects.all()
 
-        department_id = self.request.query_params.get("department")
+        department_id = self.request.GET.get("department")
         if department_id:
             queryset = queryset.filter(department_id=department_id)
 
-        added_date_from = self.request.query_params.get("added_date_from")
+        added_date_from = self.request.GET.get("added_date_from")
         if added_date_from:
             queryset = queryset.filter(
                 added_date__gte=datetime.fromtimestamp(int(added_date_from))
             )
 
-        added_date_to = self.request.query_params.get("added_date_to")
+        added_date_to = self.request.GET.get("added_date_to")
         if added_date_to:
             queryset = queryset.filter(
                 added_date__lte=datetime.fromtimestamp(int(added_date_to))
             )
 
-        assigned_to_department = self.request.query_params.get("assigned_to_department")
+        assigned_to_department = self.request.GET.get("assigned_to_department")
         if assigned_to_department:
             queryset = queryset.filter(department__isnull=False)
 
-        tags = self.request.query_params.getlist("tags")
-        tags = list(filter(lambda x: Tag.objects.filter(name=x).exists(), tags))
-        tags = list(map(lambda x: Tag.objects.get_or_create(name=x)[0], tags))
+        tags = self.request.GET.getlist("tags")
+        tags = [tag for tag in tags if Tag.objects.filter(name=tag).exists()]
+        tags = [Tag.objects.get_or_create(name=x)[0] for x in tags]
         if tags:
-            queryset = queryset.filter(tags__name__in=tags)
+            queryset = queryset.filter(tags__in=tags)
 
-        author_id = self.request.query_params.get("author")
+        author_id = self.request.GET.get("author")
         if author_id:
             queryset = queryset.filter(authors__id=author_id)
 
-        return queryset[:5120]
+        return queryset[:self.MAX_PUBLICATIONS]
 
 
 class FacultyDepartmentView(APIView):
@@ -209,10 +223,8 @@ class TagListView(ListAPIView):
 
     def list(self, request, *args, **kwargs):
         q = request.query_params.get("q")
-        if q:
-            queryset = Tag.objects.filter(name__icontains=q)
-        else:
-            queryset = Tag.objects.all()[: 10 * 1024]
+        queryset = Tag.objects.filter(name__icontains=q) \
+            if q else Tag.objects.all()[:10 * 1024]
         serializer = self.get_serializer(queryset, many=True)
         return APIResponse(data=serializer.data)
 
@@ -242,11 +254,8 @@ def subscribe_email_toggle(request):
         return APIResponse(status=400, message="Неправильно указана электронная почта")
     tags = request.POST.getlist("tags")
     dep_id = int(request.POST.get("department"))
-    if dep_id == -1:
-        dep = None
-    else:
-        dep = Department.objects.get(pk=dep_id)
-    tags = list(map(lambda x: Tag.objects.get_or_create(name=x)[0], tags))
+    dep = None if dep_id == -1 else Department.objects.get(pk=dep_id)
+    tags = [Tag.objects.get_or_create(name=x)[0] for x in tags]
     object, created = EmailSubscriber.objects.get_or_create(email=email, department=dep)
     subscribe_status = True
     if not created or object.tags == tags:

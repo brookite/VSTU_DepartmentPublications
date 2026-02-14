@@ -1,7 +1,9 @@
 from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
-from autoupdate.strategy import *
+from autoupdate.api import calculate_next_global_update, get_settings, get_timestamps, logger
+from autoupdate.strategy import global_autoupdate, short_task_batch
 
 global_autoupdate_job = None
 schedule = get_settings().cron_schedule

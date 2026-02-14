@@ -1,5 +1,8 @@
+from typing import TYPE_CHECKING
+
 from django.db import models
 from django.db.models import ManyToManyField
+from django.db.models.manager import RelatedManager
 
 
 class Faculty(models.Model):
@@ -37,8 +40,11 @@ class Author(models.Model):
         max_length=128, verbose_name="Инициалы для библиотеки (главные)"
     )
     department = models.ForeignKey(
-        Department, null=True, on_delete=models.SET_NULL, verbose_name="Кафедра"
+        Department, null=False, on_delete=models.RESTRICT, verbose_name="Кафедра"
     )
+    if TYPE_CHECKING:
+        tag_set: RelatedManager["Tag"]
+        authoralias_set: RelatedManager["AuthorAlias"]
 
     class Meta:
         verbose_name = "Автор"
@@ -85,13 +91,15 @@ class Publication(models.Model):
         on_delete=models.SET_NULL,
         verbose_name="Кафедра",
     )
-
-    def __str__(self):
-        return self.html_content
+    sort_order = models.IntegerField(verbose_name="Поле сортировки (год публикации)", null=False, default=0)
 
     class Meta:
         verbose_name = "Публикация"
         verbose_name_plural = "Публикации"
+
+    def __str__(self):
+        return self.html_content
+
 
 
 class EmailSubscriber(models.Model):
@@ -111,20 +119,27 @@ class Timestamps(models.Model):
     param_name = models.CharField(max_length=64, primary_key=True, unique=True)
     timestamp = models.DateTimeField()
 
+    def __str__(self):
+        return f"{self.param_name} -> {self.timestamp}"
+
 
 class ShortUpdateTasks(models.Model):
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return str(self.author)
 
 
 class Settings(models.Model):
     param_name = models.CharField(
         max_length=64, primary_key=True, unique=True, verbose_name="Название"
     )
-    param_value = models.CharField(max_length=1024, null=True, verbose_name="Настройка")
-
-    def __str__(self):
-        return self.param_name
+    param_value = models.CharField(max_length=1024, null=False, verbose_name="Настройка")
 
     class Meta:
         verbose_name = "Параметр системы"
         verbose_name_plural = "Параметры системы"
+
+
+    def __str__(self):
+        return self.param_name

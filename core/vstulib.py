@@ -1,12 +1,11 @@
-import re
 import logging
-from typing import List, Tuple
+import re
 
-from bs4 import NavigableString
+from bs4.element import NavigableString
 
 from core.common import UniversityLibrary
-from core.dto import Publication, Department, Faculty, Author
-from core.request import *
+from core.dto import Author, Department, Faculty, Publication
+from core.request import get, get_json, innerHTML, post, soupify
 
 logger = logging.getLogger("core")
 
@@ -26,18 +25,18 @@ class VSTULibrary(UniversityLibrary):
             soup = soupify(text)
             uni = soup.select_one("select#universitet")
             fac = soup.select_one("select#faculty")
-            for univ_record in uni.children:
+            for univ_record in (uni.children if uni else []):
                 if isinstance(univ_record, NavigableString):
                     continue
-                id = int(univ_record["value"])
+                id = int(univ_record["value"]) # type: ignore
                 if id == 0:
                     continue
                 name = univ_record.text
                 universities.append((id, name))
-            for fac_record in fac.children:
+            for fac_record in fac.children: # type: ignore
                 if isinstance(fac_record, NavigableString):
                     continue
-                id = int(fac_record["value"])
+                id = int(fac_record["value"]) # type: ignore
                 if id == 0 or id == 11 or EMPTY_VALUES.match(fac_record.text):
                     continue
                 name = fac_record.text
@@ -48,10 +47,10 @@ class VSTULibrary(UniversityLibrary):
             )
         return universities, faculties
 
-    def get_all_faculties(self) -> List[Faculty]:
+    def get_all_faculties(self) -> list[Faculty]:
         return self._extract_index_information()[1]
 
-    def get_all_departments(self, faculty: Faculty) -> List[Department]:
+    def get_all_departments(self, faculty: Faculty) -> list[Department]:
         fac_id = faculty.id
         result = []
         status, json_text = get_json(
@@ -63,27 +62,27 @@ class VSTULibrary(UniversityLibrary):
                     result.append(Department(entry["title"], entry["id"], faculty))
         else:
             logger.error(
-                f"Запрос в библиотеку (получение кафедр {faculty.name}) не удался, код {status}, содержимое: {text}"
+                f"Запрос в библиотеку (получение кафедр {faculty.name}) не удался, код {status}, содержимое: {json_text}"
             )
         return result
 
     def search_by_author(
         self,
         author: Author,
-        department: Department = None,
-        publ_year_from: int = None,
-        publ_year_to: int = None,
-    ) -> Tuple[int, List[Publication]]:
+        department: Department | None = None,
+        publ_year_from: int | None = None,
+        publ_year_to: int | None = None,
+    ) -> tuple[int, list[Publication]]:
         data = {
             "universitet": "1",
             "fio": author.primary_name,
             "year_rel": "",
-            "year_rel1": publ_year_from if publ_year_from else "",
-            "year_rel2": publ_year_to if publ_year_to else "",
+            "year_rel1": publ_year_from or "",
+            "year_rel2": publ_year_to or "",
             "year_reg": "",
             "year_reg1": "",
             "year_reg2": "",
-            "faculty": department.faculty.id if department else 0,
+            "faculty": department.faculty.id if department else 0, # type: ignore
             "kafedra": department.id if department else 0,
             "v_publ": "0",
         }
@@ -92,7 +91,7 @@ class VSTULibrary(UniversityLibrary):
         publications = []
         if status == 200:
             soup = soupify(text)
-            resultlist = soup.select_one(".resultlist#LIST").children
+            resultlist = soup.select_one(".resultlist#LIST").children # type: ignore
             for publication in resultlist:
                 if isinstance(publication, NavigableString):
                     continue
@@ -105,7 +104,7 @@ class VSTULibrary(UniversityLibrary):
             )
         return status, publications
 
-    def get_author_suggestions(self, query: str) -> List[str]:
+    def get_author_suggestions(self, query: str) -> list[str]:
         if query is None:
             query = ""
         status, json_text = get_json(

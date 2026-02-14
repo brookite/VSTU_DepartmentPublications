@@ -1,12 +1,19 @@
+import datetime
+import logging
 import time
-from typing import Optional
 
-from api.models import *
-from autoupdate.api import *
-from core import dto
-from utils.datetimeutils import delta_seconds
-
+from api.models import Author, AuthorAlias, Department, Faculty, Publication, ShortUpdateTasks
+from autoupdate.api import (
+    INFO_UPDATE_SLEEP_TIME,
+    LIBRARY,
+    SLEEP_BATCH_TIME,
+    calculate_next_global_update,
+    get_settings,
+    get_timestamps,
+)
 from autoupdate.email import send_update_mail
+from core import dto
+from utils.datetimeutils import delta_seconds, now_datetime
 
 logger = logging.getLogger("autoupdate")
 
@@ -36,23 +43,13 @@ def _update_university_info():
 
 
 def _autoupdate_author(
-    author: Author, use_alias: Optional[str] = None, allow_removing: bool = False
+    author: Author, use_alias: str | None = None, allow_removing: bool = False
 ):
-    name = author.library_primary_name if not use_alias else use_alias
-    library_publications = set(
-        map(
-            lambda x: x.info,
-            LIBRARY.search_by_author(dto.Author(name))[1],
-        )
-    )
-    local_publications = set(
-        map(lambda x: x.html_content, Publication.objects.filter(authors__in=[author]))
-    )
+    name = use_alias or author.library_primary_name
+    library_publications = {x.info for x in LIBRARY.search_by_author(dto.Author(name))[1]}
+    local_publications = {x.html_content for x in Publication.objects.filter(authors__in=[author])}
     new_publications = library_publications - local_publications
-    if allow_removing:
-        removed_publications = local_publications - library_publications
-    else:
-        removed_publications = set()
+    removed_publications = local_publications - library_publications if allow_removing else set()
     logger.debug(
         f"Найдено {len(new_publications)} новых публикаций, удалению подлежит {len(removed_publications)} публикаций"
     )
@@ -75,22 +72,17 @@ def _autoupdate_author(
 
 
 def _autoupdate_author_by_department(
-    author: Author, dep: Department, use_alias: Optional[str] = None
+    author: Author, dep: Department, use_alias: str | None = None
 ):
-    name = author.library_primary_name if not use_alias else use_alias
-    library_publications = set(
-        map(
-            lambda x: x.info,
-            LIBRARY.search_by_author(
+    name = use_alias if use_alias else author.library_primary_name
+    library_publications = {x.info for x in LIBRARY.search_by_author(
                 dto.Author(name),
                 dto.Department(
                     dep.name,
                     dep.library_id,
                     dto.Faculty(dep.faculty.name, dep.faculty.library_id),
                 ),
-            )[1],
-        )
-    )
+            )[1]}
     local_publications = Publication.objects.filter(authors__in=[author])
     stats_paired_count = 0
     for pub in local_publications:
@@ -192,7 +184,7 @@ def global_autoupdate(skip_university_update=False):
             continue
         try:
             new_publs.update(autoupdate_author(author))
-        except Exception as e:
+        except Exception:
             logger.error(
                 f"Неизвестная ошибка при обновлении автора {author.library_primary_name}, {author.pk}",
                 exc_info=True,

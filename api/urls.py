@@ -1,7 +1,17 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from api.views import *
+from api.views import (
+    AuthorSuggestions,
+    AuthorViewSet,
+    FacultyDepartmentView,
+    PlanViewSet,
+    PublicationListView,
+    SettingsViewSet,
+    TagListView,
+    stats,
+    subscribe_email_toggle,
+)
 
 author_router = DefaultRouter()
 author_router.register(r"authors", AuthorViewSet, basename="author")

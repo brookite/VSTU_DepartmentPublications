@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -19,4 +18,4 @@ class Faculty:
 class Department:
     name: str
     id: int
-    faculty: Optional[Faculty]
+    faculty: Faculty | None

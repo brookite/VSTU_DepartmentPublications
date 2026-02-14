@@ -1,6 +1,15 @@
 from django.urls import path
 
-from frontend.views import *
+from frontend.views import (
+    account_profile,
+    author_details,
+    author_list,
+    dump_logs,
+    index,
+    reset_autoupdate_request,
+    update_view,
+    updates,
+)
 
 urlpatterns = [
     path("", index),

@@ -7,15 +7,15 @@ from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect, render
 from django.utils import dateformat
 
 from api import models
-from api.models import Author, Publication, Department, Tag, Timestamps
+from api.models import Author, Department, Publication, Tag, Timestamps
 from api.settings import Settings
-from autoupdate.api import calculate_next_update, calculate_next_global_update
+from autoupdate.api import calculate_next_global_update, calculate_next_update
 from departmentpublications import settings
-from utils.datetimeutils import now_datetime, from_timestamp
+from utils.datetimeutils import from_timestamp, now_datetime
 
 
 def index(request):
@@ -60,19 +60,13 @@ def updates(request):
 def author_list(request):
     q = request.GET.get("q", "")
     dep_id = request.GET.get("department")
-    if dep_id:
-        dep_id = int(dep_id)
-    else:
-        dep_id = None
+    dep_id = int(dep_id) if dep_id else None
     tags = request.GET.getlist("tags")
     filtered_tags = []
     for tag in tags:
         if (tagobj := Tag.objects.filter(name=tag)).exists():
             filtered_tags.append(tagobj.first())
-    if q.strip():
-        query = Q(full_name__icontains=q) | Q(library_primary_name__icontains=q)
-    else:
-        query = Q()
+    query = Q(full_name__icontains=q) | Q(library_primary_name__icontains=q) if q.strip() else Q()
     if dep_id:
         query &= Q(department__id=dep_id)
     if len(filtered_tags):
@@ -126,7 +120,7 @@ def update_view(request):
     def tag_filter(pub):
         any_of_authors_has_tag = False
         for author in pub.authors.all():
-            author_tags = list(map(lambda x: x.name, author.tag_set.all()))
+            author_tags = [x.name for x in author.tag_set.all()]
             if set(tags).intersection(set(author_tags)) == set(tags):
                 any_of_authors_has_tag = True
         return any_of_authors_has_tag
@@ -166,6 +160,9 @@ def dump_logs(request):
             return o.isoformat()
         raise TypeError(f"Type {type(o)} not serializable")
 
+    archive_path = None
+    stats_json_path = None
+
     stats_data = {"settings": {}, "stats": {}}
     for param in models.Settings.objects.all():
         stats_data["settings"][param.param_name] = param.param_value
@@ -194,11 +191,11 @@ def dump_logs(request):
 
         with open(archive_path, 'rb') as archive_file:
             response = HttpResponse(archive_file.read(), content_type='application/zip')
-            response['Content-Disposition'] = f'attachment; filename=logs_archive.zip'
+            response['Content-Disposition'] = 'attachment; filename=logs_archive.zip'
             return response
 
     finally:
-        if os.path.exists(archive_path):
+        if archive_path and os.path.exists(archive_path):
             os.remove(archive_path)
-        if os.path.exists(stats_json_path):
+        if stats_json_path and os.path.exists(stats_json_path):
             os.remove(stats_json_path)

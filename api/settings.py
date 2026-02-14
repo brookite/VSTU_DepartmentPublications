@@ -1,10 +1,10 @@
 import json
 import logging
 
-from api.models import Settings as SettingsModel, Author
+from api.models import Author
+from api.models import Settings as SettingsModel
 from api.models import Timestamps as TimestampsModel
-
-from utils.datetimeutils import now_datetime, from_timestamp
+from utils.datetimeutils import from_timestamp, now_datetime
 
 logger = logging.getLogger("api")
 
@@ -76,7 +76,7 @@ class Settings:
         )
 
     def plan_autoupdate(
-        self, interval: str, count: int, day_of_week: str = None, at_time: int = 0
+        self, interval: str, count: int, day_of_week: str | None = None, at_time: int = 0
     ):
         if interval not in ["day", "week", "month"]:
             raise ValueError("Invalid interval: " + interval)
@@ -90,7 +90,7 @@ class Settings:
             "saturday",
             "sunday",
         ]:
-            raise ValueError("Invalid day of week: " + day_of_week)
+            raise ValueError(f"Invalid day of week: {day_of_week}")
 
         if day_of_week is not None:
             num_day_of_week = [
@@ -126,8 +126,9 @@ class Settings:
             "hour": hour,
             "minute": minute
         }
-        logger.debug("Планирование с параметрами: {}".format(json.dumps(trace)))
+        logger.debug(f"Планирование с параметрами: {json.dumps(trace)}")
 
+        cron = "0 */12 * * *"
         if every_day_month:
             if num_day_of_week:
                 if every_day_month == 1:
@@ -179,7 +180,7 @@ class Timestamps:
 
     @property
     def last_update(self):
-        return Author.objects.order_by("-last_updated").first().last_updated
+        return Author.objects.order_by("-last_updated").first().last_updated # type: ignore
 
     @property
     def last_short_update(self):

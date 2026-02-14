@@ -1,12 +1,13 @@
 import logging
+from typing import Any
 
 from django.core import mail
 from django.core.mail import get_connection
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
-from api.models import Publication, EmailSubscriber
-from departmentpublications.settings import SERVER_ADDRESS, DEFAULT_FROM_EMAIL, EMAIL_HOST_USER
+from api.models import EmailSubscriber, Publication
+from departmentpublications.settings import DEFAULT_FROM_EMAIL, EMAIL_HOST_USER, SERVER_ADDRESS
 
 logger = logging.getLogger("autoupdate")
 
@@ -28,9 +29,9 @@ def send_update_mail(new_publications: set[Publication]):
             tag_map[tag].append(publ)
     c = 0
     for subscriber in EmailSubscriber.objects.all():
-        context = {"hostname": SERVER_ADDRESS}
+        context: dict[str, Any] = {"hostname": SERVER_ADDRESS}
         mail_needed = False
-        author_filter = lambda x: any(map(lambda y: y.department == subscriber.department, x.authors.all()))
+        author_filter = lambda x, subscriber=subscriber: any(y.department == subscriber.department for y in x.authors.all())  # noqa: E731
         if not len(subscriber.tags.all()):
             context["by_tag"] = False
             context["publications"] = list(new_publications)

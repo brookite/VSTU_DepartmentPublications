@@ -1,5 +1,5 @@
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.response import Response
 
 
 class APIResponse(Response):
@@ -8,7 +8,7 @@ class APIResponse(Response):
         if status is not None:
             if status >= 400:
                 response_data["type"] = "error"
-                response_data["message"] = message if message else "An error occurred"
+                response_data["message"] = message or "An error occurred"
             else:
                 response_data["type"] = "success"
         super().__init__(response_data, status=status)

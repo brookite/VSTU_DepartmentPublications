@@ -31,7 +31,7 @@ services:
   db:
     image: postgres:latest
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d DepartmentPublications"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -51,7 +51,9 @@ services:
     image: nginx:stable-alpine
     restart: always
     ports:
-      - "8080:80"
+      - "80:80"
+    profiles:
+      - full
     volumes:
       - staticfiles:/app/staticfiles
       - media:/app/media

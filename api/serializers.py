@@ -1,10 +1,8 @@
 import re
-from pstats import Stats
 
 from rest_framework import serializers
-from rest_framework.views import APIView
 
-from .models import *
+from api.models import Author, AuthorAlias, Department, Faculty, Publication, Tag
 
 
 class QuerySerializer(serializers.Serializer):
@@ -27,7 +25,7 @@ class AuthorSerializer(serializers.ModelSerializer):
         return [author_alias.alias for author_alias in author_aliases]
 
     def get_tags(self, obj):
-        author_tags = obj.tag_set.all()
+        author_tags = Tag.objects.filter(authors=obj)
         return [tag.name for tag in author_tags]
 
     def get_last_updated(self, obj):
@@ -50,9 +48,9 @@ class AuthorSerializer(serializers.ModelSerializer):
 
         for alias in aliases_data:
             AuthorAlias.objects.create(author=author, alias=alias)
-        for tag in tags_data:
-            tag = Tag.objects.get_or_create(name=tag)[0]
-            author.tag_set.add(tag)
+        for tag_name in tags_data:
+            tag_obj = Tag.objects.get_or_create(name=tag_name)[0]
+            tag_obj.authors.add(author)
         author.save()
 
         return author
@@ -67,21 +65,22 @@ class AuthorSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
 
         instance.aliases.all().delete()
-        instance.tags.all().delete()
         AuthorAlias.objects.filter(author=instance).delete()
         for alias in aliases_data:
             AuthorAlias.objects.create(author=instance, alias=alias)
-        Tag.objects.filter(authors__in=[instance]).delete()
-        for tag in tags_data:
-            tag = Tag.objects.get_or_create(name=tag)
-            instance.tag_set.add(tag)
+        # remove this author from all associated tags
+        for tag_obj in Tag.objects.filter(authors=instance):
+            tag_obj.authors.remove(instance)
+        for tag_name in tags_data:
+            tag_obj = Tag.objects.get_or_create(name=tag_name)[0]
+            tag_obj.authors.add(instance)
         instance.save()
 
         return instance
 
     class Meta:
         model = Author
-        fields = [
+        fields = (
             "id",
             "full_name",
             "last_updated",
@@ -92,8 +91,8 @@ class AuthorSerializer(serializers.ModelSerializer):
             "tags",
             "aliases_list",
             "tags_list",
-        ]
-        read_only_fields = ["id", "last_updated", "added", "aliases", "tags"]
+        )
+        read_only_fields = ("id", "last_updated", "added", "aliases", "tags",)
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -103,19 +102,19 @@ class DepartmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Department
-        fields = ["id", "name", "faculty_id"]
+        fields = ("id", "name", "faculty_id")
 
 
 class FacultySerializer(serializers.ModelSerializer):
     class Meta:
         model = Faculty
-        fields = ["id", "name"]
+        fields = ("id", "name")
 
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = ["id", "name"]
+        fields = ("id", "name")
 
 
 class PublicationSerializer(serializers.ModelSerializer):
@@ -131,4 +130,4 @@ class PublicationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Publication
-        fields = ["authors", "html_content", "added_date", "department"]
+        fields = ("authors", "html_content", "added_date", "department")

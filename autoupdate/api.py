@@ -2,7 +2,6 @@ import datetime
 import logging
 
 from apscheduler.triggers.cron import CronTrigger
-from django.db import OperationalError, ProgrammingError
 
 from api.models import Author, ShortUpdateTasks
 from api.settings import Settings as SettingsHighLevel
@@ -21,11 +20,8 @@ logger = logging.getLogger("autoupdate")
 def get_settings():
     global _SETTINGS
 
-    try:
-        if not _SETTINGS:
-            _SETTINGS = SettingsHighLevel()
-    except (OperationalError, ProgrammingError):
-        pass
+    if not _SETTINGS:
+        _SETTINGS = SettingsHighLevel()
 
     return _SETTINGS
 
@@ -60,8 +56,8 @@ def calculate_next_update():
     return global_update_time
 
 
-def calculate_next_global_update():
-    return CronTrigger.from_crontab(get_settings().cron_schedule).get_next_fire_time(None, now_datetime())
+def calculate_next_global_update() -> datetime.datetime:
+    return CronTrigger.from_crontab(get_settings().cron_schedule).get_next_fire_time(None, now_datetime()) # type: ignore
 
 
 def schedule_short_task(author: Author):

@@ -5,9 +5,3 @@
 
 Этот файл предназначен для тестирования, не рекомендуется отправлять его в production
 """
-
-from autoupdate.strategy import *
-
-
-def run():
-    send_update_mail(Publication.objects.all())
