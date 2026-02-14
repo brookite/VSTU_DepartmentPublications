@@ -36,6 +36,7 @@ else:
     load_dotenv("./prod.env")
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
+CSRF_TRUSTED_ORIGINS = []
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.getenv("SMTP_SERVER")
