@@ -139,7 +139,7 @@ function setAuthorInfo() {
       },
       dataType: "html",
       success: function (data) {
-        document.querySelector(".publView").innerHTML = data;
+        $('.publView').html(data);
       },
       error: function (xhr, status, error) {
         flash("Ошибка: " + error);

@@ -60,12 +60,26 @@
                           data-bs-toggle="button" 
                           autocomplete="off"
                           data-sort-dir="{{ sort_direction }}"
-                          title="Сортировка по году"
+                          title="Сортировка по году публикации. Нажмите, чтобы изменить"
                       >
                           {% if sort_direction == 'asc' %}
                               <i class="ri-sort-asc"></i> По возрастанию
                           {% else %}
                               <i class="ri-sort-desc"></i> По убыванию
+                          {% endif %}
+                      </button>
+                      <button 
+                          id="depLinkBtn" 
+                          class="btn {% if dep_link %}btn-success active{% else %}btn-outline-success{% endif %}" 
+                          type="button"
+                          data-bs-toggle="button" 
+                          autocomplete="off"
+                          title="Фильтрация по привязке статьи к кафедре в библиотеке ВУЗа"
+                      >
+                          {% if dep_link %}
+                              <i class="ri-graduation-cap-line"></i> Статьи в этой кафедре
+                          {% else %}
+                              Все статьи
                           {% endif %}
                       </button>
                   </div>
@@ -222,10 +236,11 @@
             </div>
           </div>
 <script>
-    $(document).ready(function() {
+    (function() {
         const authorId = "{{ author.pk }}";
         const yearSelect = $("#pubYearFilter");
         const sortBtn = $("#pubSortBtn");
+        const depLinkBtn = $("#depLinkBtn");
 
         // Функция перезагрузки списка с новыми параметрами
         function reloadPublications() {
@@ -233,6 +248,7 @@
             // Если кнопка нажата (active) или имеет класс btn-primary -> asc, иначе desc
             // Но мы будем читать из data-атрибута для надежности, который переключим ниже
             const sort = sortBtn.attr("data-sort-dir");
+            const depLink = depLinkBtn.hasClass("active");
 
             $.ajax({
                 url: "/views/author_info",
@@ -240,7 +256,8 @@
                 data: {
                     "author_id": authorId,
                     "year": year,
-                    "sort": sort
+                    "sort": sort,
+                    "dep_link": depLink,
                 },
                 dataType: "html",
                 success: function (data) {
@@ -265,6 +282,11 @@
             reloadPublications();
         });
 
+        depLinkBtn.on("click", function(e) {
+            e.preventDefault(); // Предотвращаем стандартное поведение кнопки
+            reloadPublications();
+        });
+
         // Обработка клика по кнопке сортировки
         sortBtn.on("click", function(e) {
             e.preventDefault(); // Предотвращаем стандартное поведение кнопки
@@ -277,5 +299,5 @@
             
             reloadPublications();
         });
-    });
+    })();
 </script>
