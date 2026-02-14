@@ -58,7 +58,8 @@ def _autoupdate_author(
     new_publ_objects = set()
     for new in new_publications:
         year = parse_publ_year(new)
-        pub, created = Publication.objects.get_or_create(html_content=new, sort_order=year or 0)
+        pub, created = Publication.objects.get_or_create(
+            html_content=new, defaults={"sort_order": year or 0})
         pub.authors.add(author)
         new_publ_objects.add(pub)
         pub.save()
@@ -100,7 +101,8 @@ def _autoupdate_author_by_department(
     new_publ_objects = set()
     for new in library_publications:
         year = parse_publ_year(new)
-        pub, created = Publication.objects.get_or_create(html_content=new, sort_order=year or 0)
+        pub, created = Publication.objects.get_or_create(
+            html_content=new, defaults={"sort_order": year or 0})
         pub.authors.add(author)
         new_publ_objects.add(pub)
         pub.save()
