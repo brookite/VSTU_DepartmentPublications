@@ -1,6 +1,5 @@
 import datetime
 import logging
-import re
 import time
 
 from api.models import Author, AuthorAlias, Department, Faculty, Publication, ShortUpdateTasks

@@ -43,8 +43,11 @@ function setDepartments(facultyId) {
   }
   $("#addDepartment").val(parseInt(localStorage.getItem("departmentId")));
   localStorage.setItem("facultyId", parseInt(facultyId));
-  if (!(secondaryEndpoints.includes(endpoint))) {
-    fetchSuggestions("")
+  if (departments.length > 0) {
+    localStorage.setItem('departmentId', parseInt(departments[0].id));
+    if (!secondaryEndpoints.includes(endpoint)) {
+      fetchSuggestions('');
+    }
   }
 }
 
@@ -103,7 +106,7 @@ function fetchSuggestions(query) {
     url: "/views/author_list",
     type: "GET",
     dataType: "html",
-      traditional : true,
+    traditional : true,
     data: {
         "q": query,
         "department": localStorage.getItem("departmentId"),
