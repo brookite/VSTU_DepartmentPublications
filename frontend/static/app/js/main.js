@@ -43,11 +43,16 @@ function setDepartments(facultyId) {
   }
   $("#addDepartment").val(parseInt(localStorage.getItem("departmentId")));
   localStorage.setItem("facultyId", parseInt(facultyId));
-  if (departments.length > 0) {
+  if (
+    departments.length > 0 &&
+    !departments
+      .filter((d) => d.id == parseInt(localStorage.getItem("departmentId")) 
+        && d.faculty_id == parseInt(facultyId)).length
+  ) {
     localStorage.setItem('departmentId', parseInt(departments[0].id));
-    if (!secondaryEndpoints.includes(endpoint)) {
-      fetchSuggestions('');
-    }
+  }
+  if (!secondaryEndpoints.includes(endpoint)) {
+    fetchSuggestions('');
   }
 }
 
