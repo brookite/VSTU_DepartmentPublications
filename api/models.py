@@ -2,8 +2,6 @@ from typing import TYPE_CHECKING
 
 from django.db import models
 from django.db.models import ManyToManyField
-from django.db.models.manager import RelatedManager
-
 
 class Faculty(models.Model):
     name = models.CharField(max_length=128, verbose_name="Название")
@@ -43,6 +41,8 @@ class Author(models.Model):
         Department, null=False, on_delete=models.RESTRICT, verbose_name="Кафедра"
     )
     if TYPE_CHECKING:
+        from django.db.models.manager import RelatedManager
+
         tag_set: RelatedManager["Tag"]
         authoralias_set: RelatedManager["AuthorAlias"]
 
